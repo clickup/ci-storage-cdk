@@ -1,0 +1,1288 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CiStorage 1`] = `
+{
+  "Description": "A stack to generate unit tests for CiStorage construct",
+  "Parameters": {
+    "BootstrapVersion": {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+    "SsmParameterValuetestimageSsmNameC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "test-imageSsmName",
+      "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
+    },
+  },
+  "Resources": {
+    "CiStorageAutoScalingGroupASGFCC25A25": {
+      "Properties": {
+        "AutoScalingGroupName": "test-cistorage",
+        "Cooldown": "30",
+        "DefaultInstanceWarmup": 60,
+        "MaxInstanceLifetime": 86400,
+        "MaxSize": "20",
+        "MetricsCollection": [
+          {
+            "Granularity": "1Minute",
+          },
+        ],
+        "MinSize": "1",
+        "MixedInstancesPolicy": {
+          "InstancesDistribution": {
+            "OnDemandAllocationStrategy": "lowest-price",
+            "OnDemandPercentageAboveBaseCapacity": 10,
+            "SpotAllocationStrategy": "price-capacity-optimized",
+          },
+          "LaunchTemplate": {
+            "LaunchTemplateSpecification": {
+              "LaunchTemplateId": {
+                "Ref": "CiStorageLaunchTemplate73370FC5",
+              },
+              "Version": {
+                "Fn::GetAtt": [
+                  "CiStorageLaunchTemplate73370FC5",
+                  "LatestVersionNumber",
+                ],
+              },
+            },
+            "Overrides": [
+              {
+                "InstanceRequirements": {
+                  "MemoryMiB": {
+                    "Max": 16384,
+                    "Min": 8192,
+                  },
+                  "VCpuCount": {
+                    "Max": 8,
+                    "Min": 4,
+                  },
+                },
+              },
+            ],
+          },
+        },
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "VpcPrivateSubnet1Subnet536B997A",
+          },
+          {
+            "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
+          },
+        ],
+      },
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "SuspendProcesses": [
+            "HealthCheck",
+            "ReplaceUnhealthy",
+            "AZRebalance",
+            "AlarmNotification",
+            "ScheduledActions",
+            "InstanceRefresh",
+          ],
+        },
+        "AutoScalingScheduledAction": {
+          "IgnoreUnmodifiedGroupSizeProperties": true,
+        },
+      },
+    },
+    "CiStorageAutoScalingGroupScalingPolicyActiveRunnersPercent7591E33E": {
+      "Properties": {
+        "AutoScalingGroupName": {
+          "Ref": "CiStorageAutoScalingGroupASGFCC25A25",
+        },
+        "PolicyType": "TargetTrackingScaling",
+        "TargetTrackingConfiguration": {
+          "CustomizedMetricSpecification": {
+            "Dimensions": [
+              {
+                "Name": "GH_REPOSITORY",
+                "Value": "time-loop/slapdash",
+              },
+            ],
+            "MetricName": "ActiveRunnersPercent",
+            "Namespace": "ci-storage/metrics",
+            "Statistic": "Maximum",
+          },
+          "TargetValue": 80,
+        },
+      },
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+    },
+    "CiStorageAutoScalingGroupScalingPolicyIdleRunnersCountInverseC0CB6D01": {
+      "Properties": {
+        "AutoScalingGroupName": {
+          "Ref": "CiStorageAutoScalingGroupASGFCC25A25",
+        },
+        "PolicyType": "TargetTrackingScaling",
+        "TargetTrackingConfiguration": {
+          "CustomizedMetricSpecification": {
+            "Dimensions": [
+              {
+                "Name": "GH_REPOSITORY",
+                "Value": "time-loop/slapdash",
+              },
+            ],
+            "MetricName": "IdleRunnersCountInverse",
+            "Namespace": "ci-storage/metrics",
+            "Statistic": "Maximum",
+          },
+          "TargetValue": 999995,
+        },
+      },
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+    },
+    "CiStorageHost001A90FC20D0": {
+      "Properties": {
+        "HostedZoneId": "test-hostedZoneId",
+        "Name": "ci-storage-host-001.test-zoneName.",
+        "ResourceRecords": [
+          {
+            "Fn::GetAtt": [
+              "CiStorageHost001Instance74416F6B759834ad74cbcd85",
+              "PrivateIp",
+            ],
+          },
+        ],
+        "TTL": "60",
+        "Type": "A",
+      },
+      "Type": "AWS::Route53::RecordSet",
+    },
+    "CiStorageHost001Instance74416F6B759834ad74cbcd85": {
+      "DependsOn": [
+        "CiStorageRole4D5EC2E2",
+      ],
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": "",
+            },
+          ],
+        },
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "DeleteOnTermination": true,
+              "Encrypted": true,
+              "VolumeSize": 200,
+              "VolumeType": "gp2",
+            },
+          },
+        ],
+        "IamInstanceProfile": {
+          "Ref": "CiStorageHost001InstanceInstanceProfileAF3BBAE6",
+        },
+        "ImageId": {
+          "Ref": "SsmParameterValuetestimageSsmNameC96584B6F00A464EAD1953AFF4B05118Parameter",
+        },
+        "InstanceType": "t3.large",
+        "KeyName": {
+          "Fn::GetAtt": [
+            "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+            "KeyPairName",
+          ],
+        },
+        "LaunchTemplate": {
+          "LaunchTemplateName": "Host001InstanceLaunchTemplate",
+          "Version": {
+            "Fn::GetAtt": [
+              "CiStorageHost001InstanceLaunchTemplate75DE93DE",
+              "LatestVersionNumber",
+            ],
+          },
+        },
+        "SecurityGroupIds": [
+          "test-securityGroupId",
+        ],
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet1Subnet536B997A",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "ci-storage-host-001.test-zoneName",
+          },
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#cloud-config
+fqdn: ci-storage-host-001.test-zoneName
+apt_sources:
+  - source: deb https://cli.github.com/packages stable main
+    keyid: 23F3D4EA75716059
+    filename: github-cli.list
+  - source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
+    keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+    filename: docker.list
+packages:
+  - awscli
+  - gh
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose-plugin
+  - git
+  - gosu
+  - mc
+  - curl
+  - apt-transport-https
+  - ca-certificates
+write_files:
+  - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
+    content: |
+      net.ipv4.conf.all.forwarding=1
+  - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      sed -i -E '/TimeoutStartSec=.*/a TimeoutStopSec=3600' /usr/lib/systemd/system/docker.service
+      systemctl daemon-reload
+  - path: /var/lib/cloud/scripts/per-once/switch-ssm-user-to-ubuntu-on-login.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      sed -i -E '/ExecStart=/i Environment="ENV=/etc/profile.ssm-user"' /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
+      echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
+      systemctl daemon-reload
+      systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+  - path: /var/lib/cloud/scripts/per-boot/run-docker-compose-on-boot.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      echo "*/1 * * * * ubuntu /home/ubuntu/run-docker-compose.sh 2>&1 | logger -t run-docker-compose" > /etc/cron.d/run-docker-compose
+      exec /home/ubuntu/run-docker-compose.sh
+  - path: /home/ubuntu/run-docker-compose.sh
+    owner: ubuntu:ubuntu
+    permissions: "0755"
+    defer: true
+    content: |
+      #!/bin/bash
+      set -e -o pipefail
+      # Switch to non-privileged user if running as root.
+      if [[ $(whoami) != "ubuntu" ]]; then
+        exec gosu ubuntu:ubuntu "$BASH_SOURCE"
+      fi
+      # Ensure there is only one instance of this script running.
+      exec {FD}<$BASH_SOURCE
+      flock -n $FD || { echo "Already running."; exit 0; }
+      # Load private and public keys from Secrets Manager to ~/.ssh.
+      region=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      mkdir -p ~/.ssh && chmod 700 ~/.ssh
+      aws secretsmanager get-secret-value --region "$region" \\
+        --secret-id "ec2-ssh-key/",
+                {
+                  "Fn::GetAtt": [
+                    "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+                    "KeyPairName",
+                  ],
+                },
+                "/private" \\
+        --query SecretString --output text \\
+        > ~/.ssh/ci-storage
+      chmod 600 ~/.ssh/ci-storage
+      ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
+      # Load GitHub PAT from Secrets Manager and login to GitHub.
+      aws secretsmanager get-secret-value --region "$region" \\
+        --secret-id "ci-storage/gh-token" \\
+        --query SecretString --output text \\
+        | gh auth login --with-token
+      gh auth setup-git
+      # Pull the repository and run docker compose.
+      mkdir -p ~/git && cd ~/git
+      if [[ ! -d .git ]]; then
+        git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
+        if [[ "docker" != "." ]]; then
+          git sparse-checkout set --no-cone "docker"
+        fi
+        git checkout
+      else
+        git pull --rebase
+      fi
+      sudo usermod -aG docker ubuntu
+      GH_TOKEN=$(gh auth token) exec sg docker -c 'cd "docker" && docker compose pull && exec docker compose up --build -d'
+  - path: /home/ubuntu/.bash_profile
+    owner: ubuntu:ubuntu
+    permissions: "0644"
+    defer: true
+    content: |
+      #!/bin/bash
+      if [ -d ~/git/"docker" ]; then
+        cd ~/git/"docker"
+        echo '$ docker compose ps'
+        docker --log-level=ERROR compose ps --format "table {{.Service}}\\t{{.Status}}\\t{{.Ports}}"
+        echo
+      fi
+",
+              ],
+            ],
+          },
+        },
+      },
+      "Type": "AWS::EC2::Instance",
+    },
+    "CiStorageHost001InstanceInstanceProfileAF3BBAE6": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "CiStorageRole4D5EC2E2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "CiStorageHost001InstanceLaunchTemplate75DE93DE": {
+      "Properties": {
+        "LaunchTemplateData": {
+          "MetadataOptions": {
+            "HttpTokens": "required",
+          },
+        },
+        "LaunchTemplateName": "Host001InstanceLaunchTemplate",
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "CiStorageLaunchTemplate73370FC5": {
+      "DependsOn": [
+        "CiStorageRole4D5EC2E2",
+      ],
+      "Properties": {
+        "LaunchTemplateData": {
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "DeleteOnTermination": true,
+                "Encrypted": true,
+                "VolumeSize": 50,
+                "VolumeType": "gp2",
+              },
+            },
+          ],
+          "IamInstanceProfile": {
+            "Arn": {
+              "Fn::GetAtt": [
+                "CiStorageLaunchTemplateProfile1CF26B91",
+                "Arn",
+              ],
+            },
+          },
+          "ImageId": {
+            "Ref": "SsmParameterValuetestimageSsmNameC96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+          "KeyName": {
+            "Fn::GetAtt": [
+              "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+              "KeyPairName",
+            ],
+          },
+          "MetadataOptions": {
+            "HttpPutResponseHopLimit": 2,
+            "HttpTokens": "required",
+          },
+          "SecurityGroupIds": [
+            "test-securityGroupId",
+          ],
+          "TagSpecifications": [
+            {
+              "ResourceType": "instance",
+              "Tags": [
+                {
+                  "Key": "Name",
+                  "Value": "Test/CiStorage/LaunchTemplate",
+                },
+              ],
+            },
+            {
+              "ResourceType": "volume",
+              "Tags": [
+                {
+                  "Key": "Name",
+                  "Value": "Test/CiStorage/LaunchTemplate",
+                },
+              ],
+            },
+          ],
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#cloud-config
+apt_sources:
+  - source: deb https://cli.github.com/packages stable main
+    keyid: 23F3D4EA75716059
+    filename: github-cli.list
+  - source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
+    keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+    filename: docker.list
+packages:
+  - awscli
+  - gh
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose-plugin
+  - git
+  - gosu
+  - mc
+  - curl
+  - apt-transport-https
+  - ca-certificates
+write_files:
+  - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
+    content: |
+      net.ipv4.conf.all.forwarding=1
+  - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      sed -i -E '/TimeoutStartSec=.*/a TimeoutStopSec=3600' /usr/lib/systemd/system/docker.service
+      systemctl daemon-reload
+  - path: /var/lib/cloud/scripts/per-once/switch-ssm-user-to-ubuntu-on-login.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      sed -i -E '/ExecStart=/i Environment="ENV=/etc/profile.ssm-user"' /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
+      echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
+      systemctl daemon-reload
+      systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+  - path: /var/lib/cloud/scripts/per-boot/run-docker-compose-on-boot.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      echo "*/1 * * * * ubuntu /home/ubuntu/run-docker-compose.sh 2>&1 | logger -t run-docker-compose" > /etc/cron.d/run-docker-compose
+      exec /home/ubuntu/run-docker-compose.sh
+  - path: /home/ubuntu/run-docker-compose.sh
+    owner: ubuntu:ubuntu
+    permissions: "0755"
+    defer: true
+    content: |
+      #!/bin/bash
+      set -e -o pipefail
+      # Switch to non-privileged user if running as root.
+      if [[ $(whoami) != "ubuntu" ]]; then
+        exec gosu ubuntu:ubuntu "$BASH_SOURCE"
+      fi
+      # Ensure there is only one instance of this script running.
+      exec {FD}<$BASH_SOURCE
+      flock -n $FD || { echo "Already running."; exit 0; }
+      # Load private and public keys from Secrets Manager to ~/.ssh.
+      region=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      mkdir -p ~/.ssh && chmod 700 ~/.ssh
+      aws secretsmanager get-secret-value --region "$region" \\
+        --secret-id "ec2-ssh-key/",
+                  {
+                    "Fn::GetAtt": [
+                      "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+                      "KeyPairName",
+                    ],
+                  },
+                  "/private" \\
+        --query SecretString --output text \\
+        > ~/.ssh/ci-storage
+      chmod 600 ~/.ssh/ci-storage
+      ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
+      # Load GitHub PAT from Secrets Manager and login to GitHub.
+      aws secretsmanager get-secret-value --region "$region" \\
+        --secret-id "ci-storage/gh-token" \\
+        --query SecretString --output text \\
+        | gh auth login --with-token
+      gh auth setup-git
+      # Pull the repository and run docker compose.
+      mkdir -p ~/git && cd ~/git
+      if [[ ! -d .git ]]; then
+        git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
+        if [[ "docker" != "." ]]; then
+          git sparse-checkout set --no-cone "docker"
+        fi
+        git checkout
+      else
+        git pull --rebase
+      fi
+      sudo usermod -aG docker ubuntu
+      GH_TOKEN=$(gh auth token) exec sg docker -c 'cd "docker" && docker compose pull && exec docker compose up --build -d'
+  - path: /home/ubuntu/.bash_profile
+    owner: ubuntu:ubuntu
+    permissions: "0644"
+    defer: true
+    content: |
+      #!/bin/bash
+      if [ -d ~/git/"docker" ]; then
+        cd ~/git/"docker"
+        echo '$ docker compose ps'
+        docker --log-level=ERROR compose ps --format "table {{.Service}}\\t{{.Status}}\\t{{.Ports}}"
+        echo
+      fi
+",
+                ],
+              ],
+            },
+          },
+        },
+        "LaunchTemplateName": "test-cistorage",
+        "TagSpecifications": [
+          {
+            "ResourceType": "launch-template",
+            "Tags": [
+              {
+                "Key": "Name",
+                "Value": "Test/CiStorage/LaunchTemplate",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "CiStorageLaunchTemplateProfile1CF26B91": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "CiStorageRole4D5EC2E2",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "CiStorageRole4D5EC2E2": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/CloudWatchAgentServerPolicy",
+              ],
+            ],
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "secretsmanager:GetSecretValue",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":secretsmanager:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":secret:ec2-ssh-key/",
+                        {
+                          "Fn::GetAtt": [
+                            "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+                            "KeyPairName",
+                          ],
+                        },
+                        "/private*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "CiStorageKeyPairPolicy",
+          },
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "secretsmanager:GetSecretValue",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":secretsmanager:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":secret:ci-storage/gh-token*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "CiStorageGhTokenPolicy",
+          },
+        ],
+        "RoleName": "TestCiStorageInstanceProfileRole",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Used to access ci-storage host from self-hosted runner nodes.",
+        "ExposePublicKey": false,
+        "KmsPrivate": "alias/aws/secretsmanager",
+        "KmsPublic": "alias/aws/secretsmanager",
+        "Name": "test-cistorage-sshidrsa",
+        "PublicKey": "",
+        "PublicKeyFormat": "OPENSSH",
+        "RemoveKeySecretsAfterDays": 0,
+        "SecretPrefix": "ec2-ssh-key/",
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "EC2KeyNameManagerLambdaBE629145",
+            "Arn",
+          ],
+        },
+        "StackName": "Test",
+        "StorePublicKey": false,
+        "Tags": {
+          "CreatedByCfnCustomResource": "CFN::Resource::Custom::EC2-Key-Pair",
+        },
+      },
+      "Type": "Custom::EC2-Key-Pair",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "EC2KeyNameManagerLambdaBE629145": {
+      "DependsOn": [
+        "EC2KeyPairManagerRoleB243C519",
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
+          },
+          "S3Key": "6df647194cd2bd5032d6a0553b301f3350abb6035c13b5ba2a73503a45e7fd80.zip",
+        },
+        "Description": "Custom CFN resource: Manage EC2 Key Pairs",
+        "FunctionName": "Test-CFN-Resource-Custom-EC2-Key-Pair",
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "EC2KeyPairManagerRoleB243C519",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs18.x",
+        "Timeout": 180,
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "EC2KeyPairManagerPolicyEBBC1576": {
+      "Properties": {
+        "Description": "Used by Lambda CFN-Resource-Custom-EC2-Key-Pair, which is a custom CFN resource, managing EC2 Key Pairs",
+        "Path": "/",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "ec2:DescribeKeyPairs",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "ec2:CreateKeyPair",
+                "ec2:CreateTags",
+                "ec2:ImportKeyPair",
+              ],
+              "Condition": {
+                "StringLike": {
+                  "aws:RequestTag/CreatedByCfnCustomResource": "CFN::Resource::Custom::EC2-Key-Pair",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ec2:*:*:key-pair/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": [
+                "ec2:CreateTags",
+                "ec2:DeleteKeyPair",
+                "ec2:DeleteTags",
+              ],
+              "Condition": {
+                "StringLike": {
+                  "ec2:ResourceTag/CreatedByCfnCustomResource": "CFN::Resource::Custom::EC2-Key-Pair",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition",
+                    },
+                    ":ec2:*:*:key-pair/*",
+                  ],
+                ],
+              },
+            },
+            {
+              "Action": "secretsmanager:ListSecrets",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "secretsmanager:CreateSecret",
+                "secretsmanager:TagResource",
+              ],
+              "Condition": {
+                "StringLike": {
+                  "aws:RequestTag/CreatedByCfnCustomResource": "CFN::Resource::Custom::EC2-Key-Pair",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "secretsmanager:DeleteResourcePolicy",
+                "secretsmanager:DeleteSecret",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:ListSecretVersionIds",
+                "secretsmanager:PutResourcePolicy",
+                "secretsmanager:PutSecretValue",
+                "secretsmanager:RestoreSecret",
+                "secretsmanager:UntagResource",
+                "secretsmanager:UpdateSecret",
+                "secretsmanager:UpdateSecretVersionStage",
+              ],
+              "Condition": {
+                "StringLike": {
+                  "secretsmanager:ResourceTag/CreatedByCfnCustomResource": "CFN::Resource::Custom::EC2-Key-Pair",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::ManagedPolicy",
+    },
+    "EC2KeyPairManagerRoleB243C519": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "Description": "Used by Lambda CFN-Resource-Custom-EC2-Key-Pair, which is a custom CFN resource, managing EC2 Key Pairs",
+        "ManagedPolicyArns": [
+          {
+            "Ref": "EC2KeyPairManagerPolicyEBBC1576",
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "Vpc8378EB38": {
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::VPC",
+    },
+    "VpcIGWD7BA715C": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::InternetGateway",
+    },
+    "VpcPrivateSubnet1DefaultRouteBE02A9ED": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcPublicSubnet1NATGateway4D7517AA",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTableB2C5B500",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet1RouteTableAssociation70C59FA6": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet1RouteTableB2C5B500",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet1Subnet536B997A",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet1RouteTableB2C5B500": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet1Subnet536B997A": {
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": "",
+            },
+          ],
+        },
+        "CidrBlock": "10.0.128.0/18",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PrivateSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPrivateSubnet2DefaultRoute060D2087": {
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": {
+          "Ref": "VpcPublicSubnet2NATGateway9182C01D",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTableA678073B",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPrivateSubnet2RouteTableA678073B": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPrivateSubnet2RouteTableAssociationA89CAD56": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPrivateSubnet2RouteTableA678073B",
+        },
+        "SubnetId": {
+          "Ref": "VpcPrivateSubnet2Subnet3788AAA1",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPrivateSubnet2Subnet3788AAA1": {
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": "",
+            },
+          ],
+        },
+        "CidrBlock": "10.0.192.0/18",
+        "MapPublicIpOnLaunch": false,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Private",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Private",
+          },
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PrivateSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet1DefaultRoute3DA9E72A": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet1EIPD7E02669": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "VpcPublicSubnet1NATGateway4D7517AA": {
+      "DependsOn": [
+        "VpcPublicSubnet1DefaultRoute3DA9E72A",
+        "VpcPublicSubnet1RouteTableAssociation97140677",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcPublicSubnet1EIPD7E02669",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PublicSubnet1",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VpcPublicSubnet1RouteTable6C95E38E": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet1RouteTableAssociation97140677": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet1RouteTable6C95E38E",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet1Subnet5C2D37C4",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet1Subnet5C2D37C4": {
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
+            {
+              "Fn::GetAZs": "",
+            },
+          ],
+        },
+        "CidrBlock": "10.0.0.0/18",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PublicSubnet1",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcPublicSubnet2DefaultRoute97F91067": {
+      "DependsOn": [
+        "VpcVPCGWBF912B6E",
+      ],
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable94F7E489",
+        },
+      },
+      "Type": "AWS::EC2::Route",
+    },
+    "VpcPublicSubnet2EIP3C605A87": {
+      "Properties": {
+        "Domain": "vpc",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PublicSubnet2",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::EIP",
+    },
+    "VpcPublicSubnet2NATGateway9182C01D": {
+      "DependsOn": [
+        "VpcPublicSubnet2DefaultRoute97F91067",
+        "VpcPublicSubnet2RouteTableAssociationDD5762D8",
+      ],
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "VpcPublicSubnet2EIP3C605A87",
+            "AllocationId",
+          ],
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet2Subnet691E08A3",
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PublicSubnet2",
+          },
+        ],
+      },
+      "Type": "AWS::EC2::NatGateway",
+    },
+    "VpcPublicSubnet2RouteTable94F7E489": {
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::RouteTable",
+    },
+    "VpcPublicSubnet2RouteTableAssociationDD5762D8": {
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "VpcPublicSubnet2RouteTable94F7E489",
+        },
+        "SubnetId": {
+          "Ref": "VpcPublicSubnet2Subnet691E08A3",
+        },
+      },
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+    },
+    "VpcPublicSubnet2Subnet691E08A3": {
+      "Properties": {
+        "AvailabilityZone": {
+          "Fn::Select": [
+            1,
+            {
+              "Fn::GetAZs": "",
+            },
+          ],
+        },
+        "CidrBlock": "10.0.64.0/18",
+        "MapPublicIpOnLaunch": true,
+        "Tags": [
+          {
+            "Key": "aws-cdk:subnet-name",
+            "Value": "Public",
+          },
+          {
+            "Key": "aws-cdk:subnet-type",
+            "Value": "Public",
+          },
+          {
+            "Key": "Name",
+            "Value": "Test/Vpc/PublicSubnet2",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::Subnet",
+    },
+    "VpcVPCGWBF912B6E": {
+      "Properties": {
+        "InternetGatewayId": {
+          "Ref": "VpcIGWD7BA715C",
+        },
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+    },
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
