@@ -141,7 +141,7 @@ exports[`CiStorage 1`] = `
         "ResourceRecords": [
           {
             "Fn::GetAtt": [
-              "CiStorageHost001Instance74416F6B759834ad74cbcd85",
+              "CiStorageHost001Instance74416F6Bf26988f5da1e697f",
               "PrivateIp",
             ],
           },
@@ -151,9 +151,9 @@ exports[`CiStorage 1`] = `
       },
       "Type": "AWS::Route53::RecordSet",
     },
-    "CiStorageHost001Instance74416F6B759834ad74cbcd85": {
+    "CiStorageHost001Instance74416F6Bf26988f5da1e697f": {
       "DependsOn": [
-        "CiStorageRole4D5EC2E2",
+        "CiStorageHostRole9FF47CEB",
       ],
       "Properties": {
         "AvailabilityZone": {
@@ -170,7 +170,7 @@ exports[`CiStorage 1`] = `
             "Ebs": {
               "DeleteOnTermination": true,
               "Encrypted": true,
-              "VolumeSize": 200,
+              "VolumeSize": 20,
               "VolumeType": "gp2",
             },
           },
@@ -240,24 +240,125 @@ write_files:
   - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
     content: |
       net.ipv4.conf.all.forwarding=1
+  - path: /etc/sysctl.d/lower-fs-inodes-eviction-from-cache.conf
+    content: |
+      vm.vfs_cache_pressure=0
+      vm.swappiness=10
   - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
     permissions: "0755"
     content: |
       #!/bin/bash
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
       sed -i -E '/TimeoutStartSec=.*/a TimeoutStopSec=3600' /usr/lib/systemd/system/docker.service
       systemctl daemon-reload
   - path: /var/lib/cloud/scripts/per-once/switch-ssm-user-to-ubuntu-on-login.sh
     permissions: "0755"
     content: |
       #!/bin/bash
-      sed -i -E '/ExecStart=/i Environment="ENV=/etc/profile.ssm-user"' /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
+      sed -i -E \\
+        '/ExecStart=/i Environment="ENV=/etc/profile.ssm-user"' \\
+        /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
       echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
       systemctl daemon-reload
       systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+  - path: /var/lib/cloud/scripts/per-once/detach-volume-from-old-instance-and-mount.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
+      export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      volume_id="",
+                {
+                  "Fn::GetAtt": [
+                    "CiStorageHost001Volume0C0FD514",
+                    "VolumeId",
+                  ],
+                },
+                ""
+      volume_hash="\${volume_id##vol-}"
+      volume_dir="/mnt"
+      volume_label="MNT"
+      instance_id=$(ec2metadata --instance-id)
+
+      # Stop the old instances. This causes a small downtime of the host
+      # service, but it's acceptable for the CI use case.
+      old_instance_id=$(
+        aws ec2 describe-volumes \\
+          --volume-ids "$volume_id" \\
+          --query "Volumes[].Attachments[].InstanceId" \\
+          --output text
+      )
+      if [[ "$old_instance_id" != "" ]]; then
+        sent_command=0
+        while ! aws ec2 describe-instances \\
+          --instance-ids "$old_instance_id" \\
+          --query "Reservations[].Instances[].State.Name" \\
+          --output text \\
+          | egrep -q "stopped|terminated"
+        do
+          if [[ "$sent_command" == "0" ]]; then
+            sent_command=1
+            aws ec2 stop-instances --instance-ids "$old_instance_id" || true
+          fi
+          sleep 1
+        done
+      fi
+
+      # Detach volume from the old instance.
+      sent_command=0
+      while ! aws ec2 describe-volumes \\
+        --volume-ids "$volume_id" \\
+        --query "Volumes[].State" \\
+        --output text \\
+        | grep -q available
+      do
+        if [[ "$sent_command" == "0" ]]; then
+          sent_command=1
+          aws ec2 detach-volume --volume-id "$volume_id" --force || true
+        fi
+        sleep 0.2;
+      done
+
+      # Attach volume to this instance and wait for the device to appear.
+      sent_command=0
+      while ! ls /dev/disk/by-id | grep -q "$volume_hash"; do
+        if [[ "$sent_command" == "0" ]]; then
+          sent_command=1
+          aws ec2 attach-volume --volume-id "$volume_id" --instance-id "$instance_id" --device /dev/sdf
+        fi
+        sleep 0.2
+      done
+
+      # Mount volume if it already exists, or create the filesystem.
+      lsblk
+      ls -la /dev/disk/by-id
+      device=$(echo /dev/disk/by-id/*$volume_hash)
+      if ! grep -q "LABEL=$volume_label" /etc/fstab; then
+        echo "LABEL=$volume_label $volume_dir auto defaults,noatime,data=writeback 0 0" >> /etc/fstab
+      fi
+      mount -a || true
+      if ! mountpoint "$volume_dir"; then
+        mkfs -t ext4 "$device"
+        tune2fs -L "$volume_label" "$device"
+        mount -a
+        systemctl stop docker docker.socket
+        ls -la /var/lib/docker
+        cp -axT /var/lib/docker "$volume_dir/var_lib_docker"
+        mv -f /var/lib/docker /var/lib/docker.old
+        ln -sT "$volume_dir/var_lib_docker" /var/lib/docker
+        systemctl start docker docker.socket
+      fi
+      ls -la "$volume_dir"
   - path: /var/lib/cloud/scripts/per-boot/run-docker-compose-on-boot.sh
     permissions: "0755"
     content: |
       #!/bin/bash
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
       echo "*/1 * * * * ubuntu /home/ubuntu/run-docker-compose.sh 2>&1 | logger -t run-docker-compose" > /etc/cron.d/run-docker-compose
       exec /home/ubuntu/run-docker-compose.sh
   - path: /home/ubuntu/run-docker-compose.sh
@@ -266,18 +367,21 @@ write_files:
     defer: true
     content: |
       #!/bin/bash
-      set -e -o pipefail
+
       # Switch to non-privileged user if running as root.
       if [[ $(whoami) != "ubuntu" ]]; then
         exec gosu ubuntu:ubuntu "$BASH_SOURCE"
       fi
+
       # Ensure there is only one instance of this script running.
       exec {FD}<$BASH_SOURCE
-      flock -n $FD || { echo "Already running."; exit 0; }
+      flock -n "$FD" || { echo "Already running."; exit 0; }
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
       # Load private and public keys from Secrets Manager to ~/.ssh.
-      region=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
       mkdir -p ~/.ssh && chmod 700 ~/.ssh
-      aws secretsmanager get-secret-value --region "$region" \\
+      aws secretsmanager get-secret-value \\
         --secret-id "ec2-ssh-key/",
                 {
                   "Fn::GetAtt": [
@@ -290,13 +394,15 @@ write_files:
         > ~/.ssh/ci-storage
       chmod 600 ~/.ssh/ci-storage
       ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
+
       # Load GitHub PAT from Secrets Manager and login to GitHub.
-      aws secretsmanager get-secret-value --region "$region" \\
+      aws secretsmanager get-secret-value \\
         --secret-id "ci-storage/gh-token" \\
         --query SecretString --output text \\
         | gh auth login --with-token
       gh auth setup-git
-      # Pull the repository and run docker compose.
+
+      # Pull the repository.
       mkdir -p ~/git && cd ~/git
       if [[ ! -d .git ]]; then
         git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
@@ -307,8 +413,14 @@ write_files:
       else
         git pull --rebase
       fi
+
+      # Run docker compose.
       sudo usermod -aG docker ubuntu
-      GH_TOKEN=$(gh auth token) exec sg docker -c 'cd "docker" && docker compose pull && exec docker compose up --build -d'
+      export GH_TOKEN
+      set +o xtrace
+      GH_TOKEN=$(gh auth token)
+      set -o xtrace
+      exec sg docker -c 'cd "docker" && docker compose pull && exec docker compose up --build -d'
   - path: /home/ubuntu/.bash_profile
     owner: ubuntu:ubuntu
     permissions: "0644"
@@ -318,7 +430,7 @@ write_files:
       if [ -d ~/git/"docker" ]; then
         cd ~/git/"docker"
         echo '$ docker compose ps'
-        docker --log-level=ERROR compose ps --format "table {{.Service}}\\t{{.Status}}\\t{{.Ports}}"
+        docker --log-level=ERROR compose ps --format="table {{.Service}}\\t{{.Status}}\\t{{.Ports}}"
         echo
       fi
 ",
@@ -333,7 +445,7 @@ write_files:
       "Properties": {
         "Roles": [
           {
-            "Ref": "CiStorageRole4D5EC2E2",
+            "Ref": "CiStorageHostRole9FF47CEB",
           },
         ],
       },
@@ -350,210 +462,32 @@ write_files:
       },
       "Type": "AWS::EC2::LaunchTemplate",
     },
-    "CiStorageLaunchTemplate73370FC5": {
-      "DependsOn": [
-        "CiStorageRole4D5EC2E2",
-      ],
+    "CiStorageHost001Volume0C0FD514": {
       "Properties": {
-        "LaunchTemplateData": {
-          "BlockDeviceMappings": [
+        "AutoEnableIO": true,
+        "AvailabilityZone": {
+          "Fn::Select": [
+            0,
             {
-              "DeviceName": "/dev/sda1",
-              "Ebs": {
-                "DeleteOnTermination": true,
-                "Encrypted": true,
-                "VolumeSize": 50,
-                "VolumeType": "gp2",
-              },
+              "Fn::GetAZs": "",
             },
           ],
-          "IamInstanceProfile": {
-            "Arn": {
-              "Fn::GetAtt": [
-                "CiStorageLaunchTemplateProfile1CF26B91",
-                "Arn",
-              ],
-            },
-          },
-          "ImageId": {
-            "Ref": "SsmParameterValuetestimageSsmNameC96584B6F00A464EAD1953AFF4B05118Parameter",
-          },
-          "KeyName": {
-            "Fn::GetAtt": [
-              "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
-              "KeyPairName",
-            ],
-          },
-          "MetadataOptions": {
-            "HttpPutResponseHopLimit": 2,
-            "HttpTokens": "required",
-          },
-          "SecurityGroupIds": [
-            "test-securityGroupId",
-          ],
-          "TagSpecifications": [
-            {
-              "ResourceType": "instance",
-              "Tags": [
-                {
-                  "Key": "Name",
-                  "Value": "Test/CiStorage/LaunchTemplate",
-                },
-              ],
-            },
-            {
-              "ResourceType": "volume",
-              "Tags": [
-                {
-                  "Key": "Name",
-                  "Value": "Test/CiStorage/LaunchTemplate",
-                },
-              ],
-            },
-          ],
-          "UserData": {
-            "Fn::Base64": {
-              "Fn::Join": [
-                "",
-                [
-                  "#cloud-config
-apt_sources:
-  - source: deb https://cli.github.com/packages stable main
-    keyid: 23F3D4EA75716059
-    filename: github-cli.list
-  - source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
-    keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
-    filename: docker.list
-packages:
-  - awscli
-  - gh
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - docker-compose-plugin
-  - git
-  - gosu
-  - mc
-  - curl
-  - apt-transport-https
-  - ca-certificates
-write_files:
-  - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
-    content: |
-      net.ipv4.conf.all.forwarding=1
-  - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
-    permissions: "0755"
-    content: |
-      #!/bin/bash
-      sed -i -E '/TimeoutStartSec=.*/a TimeoutStopSec=3600' /usr/lib/systemd/system/docker.service
-      systemctl daemon-reload
-  - path: /var/lib/cloud/scripts/per-once/switch-ssm-user-to-ubuntu-on-login.sh
-    permissions: "0755"
-    content: |
-      #!/bin/bash
-      sed -i -E '/ExecStart=/i Environment="ENV=/etc/profile.ssm-user"' /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
-      echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
-      systemctl daemon-reload
-      systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
-  - path: /var/lib/cloud/scripts/per-boot/run-docker-compose-on-boot.sh
-    permissions: "0755"
-    content: |
-      #!/bin/bash
-      echo "*/1 * * * * ubuntu /home/ubuntu/run-docker-compose.sh 2>&1 | logger -t run-docker-compose" > /etc/cron.d/run-docker-compose
-      exec /home/ubuntu/run-docker-compose.sh
-  - path: /home/ubuntu/run-docker-compose.sh
-    owner: ubuntu:ubuntu
-    permissions: "0755"
-    defer: true
-    content: |
-      #!/bin/bash
-      set -e -o pipefail
-      # Switch to non-privileged user if running as root.
-      if [[ $(whoami) != "ubuntu" ]]; then
-        exec gosu ubuntu:ubuntu "$BASH_SOURCE"
-      fi
-      # Ensure there is only one instance of this script running.
-      exec {FD}<$BASH_SOURCE
-      flock -n $FD || { echo "Already running."; exit 0; }
-      # Load private and public keys from Secrets Manager to ~/.ssh.
-      region=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
-      mkdir -p ~/.ssh && chmod 700 ~/.ssh
-      aws secretsmanager get-secret-value --region "$region" \\
-        --secret-id "ec2-ssh-key/",
-                  {
-                    "Fn::GetAtt": [
-                      "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
-                      "KeyPairName",
-                    ],
-                  },
-                  "/private" \\
-        --query SecretString --output text \\
-        > ~/.ssh/ci-storage
-      chmod 600 ~/.ssh/ci-storage
-      ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
-      # Load GitHub PAT from Secrets Manager and login to GitHub.
-      aws secretsmanager get-secret-value --region "$region" \\
-        --secret-id "ci-storage/gh-token" \\
-        --query SecretString --output text \\
-        | gh auth login --with-token
-      gh auth setup-git
-      # Pull the repository and run docker compose.
-      mkdir -p ~/git && cd ~/git
-      if [[ ! -d .git ]]; then
-        git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
-        if [[ "docker" != "." ]]; then
-          git sparse-checkout set --no-cone "docker"
-        fi
-        git checkout
-      else
-        git pull --rebase
-      fi
-      sudo usermod -aG docker ubuntu
-      GH_TOKEN=$(gh auth token) exec sg docker -c 'cd "docker" && docker compose pull && exec docker compose up --build -d'
-  - path: /home/ubuntu/.bash_profile
-    owner: ubuntu:ubuntu
-    permissions: "0644"
-    defer: true
-    content: |
-      #!/bin/bash
-      if [ -d ~/git/"docker" ]; then
-        cd ~/git/"docker"
-        echo '$ docker compose ps'
-        docker --log-level=ERROR compose ps --format "table {{.Service}}\\t{{.Status}}\\t{{.Ports}}"
-        echo
-      fi
-",
-                ],
-              ],
-            },
-          },
         },
-        "LaunchTemplateName": "test-cistorage",
-        "TagSpecifications": [
+        "Encrypted": true,
+        "Iops": 3000,
+        "Size": 200,
+        "Tags": [
           {
-            "ResourceType": "launch-template",
-            "Tags": [
-              {
-                "Key": "Name",
-                "Value": "Test/CiStorage/LaunchTemplate",
-              },
-            ],
+            "Key": "Name",
+            "Value": "test-cistorage-host001volume",
           },
         ],
+        "Throughput": 125,
+        "VolumeType": "gp3",
       },
-      "Type": "AWS::EC2::LaunchTemplate",
+      "Type": "AWS::EC2::Volume",
     },
-    "CiStorageLaunchTemplateProfile1CF26B91": {
-      "Properties": {
-        "Roles": [
-          {
-            "Ref": "CiStorageRole4D5EC2E2",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::InstanceProfile",
-    },
-    "CiStorageRole4D5EC2E2": {
+    "CiStorageHostRole9FF47CEB": {
       "Properties": {
         "AssumeRolePolicyDocument": {
           "Statement": [
@@ -666,7 +600,429 @@ write_files:
             "PolicyName": "CiStorageGhTokenPolicy",
           },
         ],
-        "RoleName": "TestCiStorageInstanceProfileRole",
+        "RoleName": "TestCiStorageHostRole",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CiStorageHostVolumePolicy81A8AB83": {
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "ec2:DescribeVolumes",
+                "ec2:DescribeInstances",
+              ],
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+            {
+              "Action": [
+                "ec2:StopInstances",
+                "ec2:DetachVolume",
+                "ec2:AttachVolume",
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "ec2:ResourceTag/aws:cloudformation:stack-name": "Test",
+                },
+              },
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":ec2:",
+                      {
+                        "Ref": "AWS::Region",
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId",
+                      },
+                      ":instance/*",
+                    ],
+                  ],
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition",
+                      },
+                      ":ec2:",
+                      {
+                        "Ref": "AWS::Region",
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId",
+                      },
+                      ":volume/*",
+                    ],
+                  ],
+                },
+              ],
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "CiStorageHostVolumePolicy",
+        "Roles": [
+          {
+            "Ref": "CiStorageHostRole9FF47CEB",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+    "CiStorageLaunchTemplate73370FC5": {
+      "DependsOn": [
+        "CiStorageRunnerRole9B60440E",
+      ],
+      "Properties": {
+        "LaunchTemplateData": {
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "DeleteOnTermination": true,
+                "Encrypted": true,
+                "VolumeSize": 50,
+                "VolumeType": "gp2",
+              },
+            },
+          ],
+          "IamInstanceProfile": {
+            "Arn": {
+              "Fn::GetAtt": [
+                "CiStorageLaunchTemplateProfile1CF26B91",
+                "Arn",
+              ],
+            },
+          },
+          "ImageId": {
+            "Ref": "SsmParameterValuetestimageSsmNameC96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+          "KeyName": {
+            "Fn::GetAtt": [
+              "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+              "KeyPairName",
+            ],
+          },
+          "MetadataOptions": {
+            "HttpPutResponseHopLimit": 2,
+            "HttpTokens": "required",
+          },
+          "SecurityGroupIds": [
+            "test-securityGroupId",
+          ],
+          "TagSpecifications": [
+            {
+              "ResourceType": "instance",
+              "Tags": [
+                {
+                  "Key": "Name",
+                  "Value": "Test/CiStorage/LaunchTemplate",
+                },
+              ],
+            },
+            {
+              "ResourceType": "volume",
+              "Tags": [
+                {
+                  "Key": "Name",
+                  "Value": "Test/CiStorage/LaunchTemplate",
+                },
+              ],
+            },
+          ],
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#cloud-config
+apt_sources:
+  - source: deb https://cli.github.com/packages stable main
+    keyid: 23F3D4EA75716059
+    filename: github-cli.list
+  - source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
+    keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+    filename: docker.list
+packages:
+  - awscli
+  - gh
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose-plugin
+  - git
+  - gosu
+  - mc
+  - curl
+  - apt-transport-https
+  - ca-certificates
+write_files:
+  - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
+    content: |
+      net.ipv4.conf.all.forwarding=1
+  - path: /etc/sysctl.d/lower-fs-inodes-eviction-from-cache.conf
+    content: |
+      vm.vfs_cache_pressure=0
+      vm.swappiness=10
+  - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
+      sed -i -E '/TimeoutStartSec=.*/a TimeoutStopSec=3600' /usr/lib/systemd/system/docker.service
+      systemctl daemon-reload
+  - path: /var/lib/cloud/scripts/per-once/switch-ssm-user-to-ubuntu-on-login.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
+      sed -i -E \\
+        '/ExecStart=/i Environment="ENV=/etc/profile.ssm-user"' \\
+        /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
+      echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
+      systemctl daemon-reload
+      systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+  - path: /var/lib/cloud/scripts/per-boot/run-docker-compose-on-boot.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
+      echo "*/1 * * * * ubuntu /home/ubuntu/run-docker-compose.sh 2>&1 | logger -t run-docker-compose" > /etc/cron.d/run-docker-compose
+      exec /home/ubuntu/run-docker-compose.sh
+  - path: /home/ubuntu/run-docker-compose.sh
+    owner: ubuntu:ubuntu
+    permissions: "0755"
+    defer: true
+    content: |
+      #!/bin/bash
+
+      # Switch to non-privileged user if running as root.
+      if [[ $(whoami) != "ubuntu" ]]; then
+        exec gosu ubuntu:ubuntu "$BASH_SOURCE"
+      fi
+
+      # Ensure there is only one instance of this script running.
+      exec {FD}<$BASH_SOURCE
+      flock -n "$FD" || { echo "Already running."; exit 0; }
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
+      # Load private and public keys from Secrets Manager to ~/.ssh.
+      export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      mkdir -p ~/.ssh && chmod 700 ~/.ssh
+      aws secretsmanager get-secret-value \\
+        --secret-id "ec2-ssh-key/",
+                  {
+                    "Fn::GetAtt": [
+                      "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+                      "KeyPairName",
+                    ],
+                  },
+                  "/private" \\
+        --query SecretString --output text \\
+        > ~/.ssh/ci-storage
+      chmod 600 ~/.ssh/ci-storage
+      ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
+
+      # Load GitHub PAT from Secrets Manager and login to GitHub.
+      aws secretsmanager get-secret-value \\
+        --secret-id "ci-storage/gh-token" \\
+        --query SecretString --output text \\
+        | gh auth login --with-token
+      gh auth setup-git
+
+      # Pull the repository.
+      mkdir -p ~/git && cd ~/git
+      if [[ ! -d .git ]]; then
+        git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
+        if [[ "docker" != "." ]]; then
+          git sparse-checkout set --no-cone "docker"
+        fi
+        git checkout
+      else
+        git pull --rebase
+      fi
+
+      # Run docker compose.
+      sudo usermod -aG docker ubuntu
+      export GH_TOKEN
+      set +o xtrace
+      GH_TOKEN=$(gh auth token)
+      set -o xtrace
+      exec sg docker -c 'cd "docker" && docker compose pull && exec docker compose up --build -d'
+  - path: /home/ubuntu/.bash_profile
+    owner: ubuntu:ubuntu
+    permissions: "0644"
+    defer: true
+    content: |
+      #!/bin/bash
+      if [ -d ~/git/"docker" ]; then
+        cd ~/git/"docker"
+        echo '$ docker compose ps'
+        docker --log-level=ERROR compose ps --format="table {{.Service}}\\t{{.Status}}\\t{{.Ports}}"
+        echo
+      fi
+",
+                ],
+              ],
+            },
+          },
+        },
+        "LaunchTemplateName": "test-cistorage",
+        "TagSpecifications": [
+          {
+            "ResourceType": "launch-template",
+            "Tags": [
+              {
+                "Key": "Name",
+                "Value": "Test/CiStorage/LaunchTemplate",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "CiStorageLaunchTemplateProfile1CF26B91": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "CiStorageRunnerRole9B60440E",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "CiStorageRunnerRole9B60440E": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/CloudWatchAgentServerPolicy",
+              ],
+            ],
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "secretsmanager:GetSecretValue",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":secretsmanager:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":secret:ec2-ssh-key/",
+                        {
+                          "Fn::GetAtt": [
+                            "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+                            "KeyPairName",
+                          ],
+                        },
+                        "/private*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "CiStorageKeyPairPolicy",
+          },
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "secretsmanager:GetSecretValue",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":secretsmanager:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":secret:ci-storage/gh-token*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "CiStorageGhTokenPolicy",
+          },
+        ],
+        "RoleName": "TestCiStorageRunnerRole",
       },
       "Type": "AWS::IAM::Role",
     },

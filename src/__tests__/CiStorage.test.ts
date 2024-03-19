@@ -53,6 +53,8 @@ class CiStorageStack extends Stack {
         ghDockerComposeDirectoryUrl:
           "https://github.com/dimikot/ci-storage#:docker",
         imageSsmName: "test-imageSsmName",
+        volumeIops: 3000,
+        volumeThroughput: 125,
         volumeGb: 200,
         instanceType: "t3.large",
         machines: 1,

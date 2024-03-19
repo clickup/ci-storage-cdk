@@ -17,7 +17,7 @@ VPC to use by this construct.
 
 #### Defined in
 
-[src/CiStorage.ts:48](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L48)
+[src/CiStorage.ts:52](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L52)
 
 ___
 
@@ -30,7 +30,7 @@ instances.
 
 #### Defined in
 
-[src/CiStorage.ts:51](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L51)
+[src/CiStorage.ts:55](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L55)
 
 ___
 
@@ -42,7 +42,7 @@ Id of the Security Group to set for the created instances.
 
 #### Defined in
 
-[src/CiStorage.ts:53](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L53)
+[src/CiStorage.ts:57](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L57)
 
 ___
 
@@ -61,7 +61,7 @@ A Hosted Zone to register the host instances in.
 
 #### Defined in
 
-[src/CiStorage.ts:55](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L55)
+[src/CiStorage.ts:59](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L59)
 
 ___
 
@@ -74,7 +74,7 @@ must pre-exist.
 
 #### Defined in
 
-[src/CiStorage.ts:63](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L63)
+[src/CiStorage.ts:67](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L67)
 
 ___
 
@@ -102,7 +102,7 @@ Configuration for self-hosted runner instances in the pool.
 
 #### Defined in
 
-[src/CiStorage.ts:65](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L65)
+[src/CiStorage.ts:69](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L69)
 
 ___
 
@@ -120,10 +120,12 @@ runner has its localhost ports redirected to that instance.
 | :------ | :------ | :------ |
 | `ghDockerComposeDirectoryUrl` | `string` | URL of docker-compose.yml (or compose.yml) directory. The tool will sparse-checkout that directory. The format is Dockerfile-compatible: https://github.com/owner/repo[#[branch]:/directory/with/compose/] |
 | `imageSsmName` | `string` | SSM parameter name which holds the reference to an instance image. |
-| `volumeGb` | `number` | Size of the root volume. |
+| `volumeIops` | `number` | IOPS of the docker volume. |
+| `volumeThroughput` | `number` | Throughput of the docker volume in MiB/s. |
+| `volumeGb` | `number` | Size of the docker volume. |
 | `instanceType` | `string` | Full name of the Instance type. |
 | `machines` | `number` | Number of instances to create. |
 
 #### Defined in
 
-[src/CiStorage.ts:103](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L103)
+[src/CiStorage.ts:107](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L107)

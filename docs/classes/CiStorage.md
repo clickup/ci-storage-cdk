@@ -53,7 +53,7 @@ Construct.constructor
 
 #### Defined in
 
-[src/CiStorage.ts:306](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L306)
+[src/CiStorage.ts:161](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L161)
 
 ## Properties
 
@@ -63,7 +63,7 @@ Construct.constructor
 
 #### Defined in
 
-[src/CiStorage.ts:296](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L296)
+[src/CiStorage.ts:150](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L150)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:297](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L297)
+[src/CiStorage.ts:151](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L151)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:298](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L298)
+[src/CiStorage.ts:152](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L152)
 
 ___
 
@@ -93,17 +93,24 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:299](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L299)
+[src/CiStorage.ts:153](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L153)
 
 ___
 
-### role
+### roles
 
-• `Readonly` **role**: `Role`
+• `Readonly` **roles**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `runner` | `Role` |
+| `host` | `Role` |
 
 #### Defined in
 
-[src/CiStorage.ts:300](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L300)
+[src/CiStorage.ts:154](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L154)
 
 ___
 
@@ -113,7 +120,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:301](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L301)
+[src/CiStorage.ts:155](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L155)
 
 ___
 
@@ -123,7 +130,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:302](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L302)
+[src/CiStorage.ts:156](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L156)
 
 ___
 
@@ -133,7 +140,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:303](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L303)
+[src/CiStorage.ts:157](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L157)
 
 ___
 
@@ -143,7 +150,17 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:304](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L304)
+[src/CiStorage.ts:158](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L158)
+
+___
+
+### hostVolumes
+
+• `Readonly` **hostVolumes**: `CfnVolume`[] = `[]`
+
+#### Defined in
+
+[src/CiStorage.ts:159](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L159)
 
 ___
 
@@ -153,7 +170,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:307](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L307)
+[src/CiStorage.ts:162](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L162)
 
 ___
 
@@ -163,7 +180,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:308](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L308)
+[src/CiStorage.ts:163](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L163)
 
 ___
 
@@ -173,4 +190,4 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:309](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L309)
+[src/CiStorage.ts:164](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L164)

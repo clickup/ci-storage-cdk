@@ -29,7 +29,9 @@ export function namer<T extends string>(
   >
 ) {
   const namer = new NamerOrig(
-    flatten(names.map((name) => (typeof name === "string" ? name : name.parts)))
+    flatten(
+      names.map((name) => (typeof name === "string" ? name : name.parts)),
+    ),
   ) as Namer;
   namer.pathKebabFrom = (scope) =>
     (scope.node.path + "/" + namer.pascal).replace(/\//g, "-").toLowerCase();

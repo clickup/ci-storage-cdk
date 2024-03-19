@@ -1,7 +1,7 @@
 {
   "name": "@clickup/ci-storage-cdk",
   "description": "A CDK construct to deploy ci-storage infrastructure",
-  "version": "2.10.291",
+  "version": "2.10.292",
   "license": "MIT",
   "keywords": [
     "cdk",
