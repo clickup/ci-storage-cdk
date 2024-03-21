@@ -62,6 +62,13 @@ exports[`CiStorage 1`] = `
             ],
           },
         },
+        "Tags": [
+          {
+            "Key": "Name",
+            "PropagateAtLaunch": true,
+            "Value": "ci-storage-runner",
+          },
+        ],
         "VPCZoneIdentifier": [
           {
             "Ref": "VpcPrivateSubnet1Subnet536B997A",
@@ -106,33 +113,32 @@ exports[`CiStorage 1`] = `
             "Namespace": "ci-storage/metrics",
             "Statistic": "Maximum",
           },
-          "TargetValue": 80,
+          "TargetValue": 70,
         },
       },
       "Type": "AWS::AutoScaling::ScalingPolicy",
     },
-    "CiStorageAutoScalingGroupScalingPolicyIdleRunnersCountInverseC0CB6D01": {
+    "CiStorageAutoScalingGroupScheduledActionCaWorkDayEnds58BA31B2": {
       "Properties": {
         "AutoScalingGroupName": {
           "Ref": "CiStorageAutoScalingGroupASGFCC25A25",
         },
-        "PolicyType": "TargetTrackingScaling",
-        "TargetTrackingConfiguration": {
-          "CustomizedMetricSpecification": {
-            "Dimensions": [
-              {
-                "Name": "GH_REPOSITORY",
-                "Value": "time-loop/slapdash",
-              },
-            ],
-            "MetricName": "IdleRunnersCountInverse",
-            "Namespace": "ci-storage/metrics",
-            "Statistic": "Maximum",
-          },
-          "TargetValue": 999995,
-        },
+        "MinSize": 5,
+        "Recurrence": "* 18 * * *",
+        "TimeZone": "America/Los_Angeles",
       },
-      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Type": "AWS::AutoScaling::ScheduledAction",
+    },
+    "CiStorageAutoScalingGroupScheduledActionCaWorkDayStartsAAC7A1B8": {
+      "Properties": {
+        "AutoScalingGroupName": {
+          "Ref": "CiStorageAutoScalingGroupASGFCC25A25",
+        },
+        "MinSize": 10,
+        "Recurrence": "* 8 * * *",
+        "TimeZone": "America/Los_Angeles",
+      },
+      "Type": "AWS::AutoScaling::ScheduledAction",
     },
     "CiStorageHost001A90FC20D0": {
       "Properties": {
@@ -141,7 +147,7 @@ exports[`CiStorage 1`] = `
         "ResourceRecords": [
           {
             "Fn::GetAtt": [
-              "CiStorageHost001Instance74416F6Bf26988f5da1e697f",
+              "CiStorageHost001Instance74416F6B4260e81d2d555257",
               "PrivateIp",
             ],
           },
@@ -151,7 +157,7 @@ exports[`CiStorage 1`] = `
       },
       "Type": "AWS::Route53::RecordSet",
     },
-    "CiStorageHost001Instance74416F6Bf26988f5da1e697f": {
+    "CiStorageHost001Instance74416F6B4260e81d2d555257": {
       "DependsOn": [
         "CiStorageHostRole9FF47CEB",
       ],
@@ -215,6 +221,7 @@ exports[`CiStorage 1`] = `
               "",
               [
                 "#cloud-config
+timezone: America/Los_Angeles
 fqdn: ci-storage-host-001.test-zoneName
 apt_sources:
   - source: deb https://cli.github.com/packages stable main
@@ -236,6 +243,7 @@ packages:
   - curl
   - apt-transport-https
   - ca-certificates
+  - tzdata
 write_files:
   - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
     content: |
@@ -244,6 +252,13 @@ write_files:
     content: |
       vm.vfs_cache_pressure=0
       vm.swappiness=10
+  - path: /var/lib/cloud/scripts/per-once/define-tz-env.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
+      echo 'TZ="America/Los_Angeles"' >> /etc/environment
   - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
     permissions: "0755"
     content: |
@@ -258,10 +273,12 @@ write_files:
       #!/bin/bash
       set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
 
-      sed -i -E \\
-        '/ExecStart=/i Environment="ENV=/etc/profile.ssm-user"' \\
-        /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
       echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
+      mkdir -p /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/
+      (
+        echo '[Service]'
+        echo 'Environment="ENV=/etc/profile.ssm-user"'
+      ) > /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/sh-env.conf
       systemctl daemon-reload
       systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
   - path: /var/lib/cloud/scripts/per-once/detach-volume-from-old-instance-and-mount.sh
@@ -750,6 +767,7 @@ write_files:
                 "",
                 [
                   "#cloud-config
+timezone: America/Los_Angeles
 apt_sources:
   - source: deb https://cli.github.com/packages stable main
     keyid: 23F3D4EA75716059
@@ -770,6 +788,7 @@ packages:
   - curl
   - apt-transport-https
   - ca-certificates
+  - tzdata
 write_files:
   - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
     content: |
@@ -778,6 +797,13 @@ write_files:
     content: |
       vm.vfs_cache_pressure=0
       vm.swappiness=10
+  - path: /var/lib/cloud/scripts/per-once/define-tz-env.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+
+      echo 'TZ="America/Los_Angeles"' >> /etc/environment
   - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
     permissions: "0755"
     content: |
@@ -792,10 +818,12 @@ write_files:
       #!/bin/bash
       set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
 
-      sed -i -E \\
-        '/ExecStart=/i Environment="ENV=/etc/profile.ssm-user"' \\
-        /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
       echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
+      mkdir -p /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/
+      (
+        echo '[Service]'
+        echo 'Environment="ENV=/etc/profile.ssm-user"'
+      ) > /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/sh-env.conf
       systemctl daemon-reload
       systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
   - path: /var/lib/cloud/scripts/per-boot/run-docker-compose-on-boot.sh

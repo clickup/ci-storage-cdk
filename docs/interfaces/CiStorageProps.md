@@ -17,7 +17,7 @@ VPC to use by this construct.
 
 #### Defined in
 
-[src/CiStorage.ts:52](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L52)
+[src/CiStorage.ts:56](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L56)
 
 ___
 
@@ -30,7 +30,7 @@ instances.
 
 #### Defined in
 
-[src/CiStorage.ts:55](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L55)
+[src/CiStorage.ts:59](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L59)
 
 ___
 
@@ -42,7 +42,7 @@ Id of the Security Group to set for the created instances.
 
 #### Defined in
 
-[src/CiStorage.ts:57](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L57)
+[src/CiStorage.ts:61](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L61)
 
 ___
 
@@ -61,7 +61,7 @@ A Hosted Zone to register the host instances in.
 
 #### Defined in
 
-[src/CiStorage.ts:59](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L59)
+[src/CiStorage.ts:63](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L63)
 
 ___
 
@@ -74,7 +74,19 @@ must pre-exist.
 
 #### Defined in
 
-[src/CiStorage.ts:67](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L67)
+[src/CiStorage.ts:71](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L71)
+
+___
+
+### timeZone
+
+• `Optional` **timeZone**: `string`
+
+Time zone for instances, example: America/Los_Angeles.
+
+#### Defined in
+
+[src/CiStorage.ts:73](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L73)
 
 ___
 
@@ -93,16 +105,18 @@ Configuration for self-hosted runner instances in the pool.
 | `imageSsmName` | `string` | SSM parameter name which holds the reference to an instance image. |
 | `volumeGb` | `number` | Size of the root volume. |
 | `instanceRequirements` | [`InstanceRequirementsProperty`, ...InstanceRequirementsProperty[]] | The list of requirements to choose Spot Instances. |
-| `scale` | \{ `onDemandPercentageAboveBaseCapacity`: `number` ; `maxActiveRunnersPercent`: `number` ; `minIdleRunnersCount`: `number` ; `maxCapacity`: `number` ; `maxInstanceLifetime`: `Duration`  } | Scaling options. |
+| `scale` | \{ `onDemandPercentageAboveBaseCapacity`: `number` ; `maxActiveRunnersPercent`: \{ `periodSec`: `number` ; `value`: `number`  } ; `minCapacity`: \{ `id`: `string` ; `value`: `number` ; `cron`: \{ `timeZone?`: `string`  } & `CronOptions`  }[] ; `maxCapacity`: `number` ; `maxInstanceLifetime`: `Duration`  } | Scaling options. |
 | `scale.onDemandPercentageAboveBaseCapacity` | `number` | The percentages of On-Demand Instances and Spot Instances for your additional capacity. |
-| `scale.maxActiveRunnersPercent` | `number` | Maximum percentage of active runners. If the number of active runners grows beyond this threshold, the autoscaling group will launch new instances until the percentage drops. |
-| `scale.minIdleRunnersCount` | `number` | Minimal number of idle runners to keep. If the auto scaling group has less than this number of idle runners, the new instances will be created. |
+| `scale.maxActiveRunnersPercent` | \{ `periodSec`: `number` ; `value`: `number`  } | Maximum percentage of active runners. If the MAX metric of number of active runners within the recent periodSec interval grows beyond this threshold, the autoscaling group will launch new instances until the percentage drops, or maxCapacity is reached. |
+| `scale.maxActiveRunnersPercent.periodSec` | `number` | Calculate MAX metric within that period. The higher is the value, the slower will the capacity lower (but it doesn't affect how fast will it increase). |
+| `scale.maxActiveRunnersPercent.value` | `number` | Value to use for the target percentage of active (busy) runners. |
+| `scale.minCapacity` | \{ `id`: `string` ; `value`: `number` ; `cron`: \{ `timeZone?`: `string`  } & `CronOptions`  }[] | Minimal number of idle runners to keep, depending on the daytime. If the auto scaling group has less than this number of instances, the new instances will be created. |
 | `scale.maxCapacity` | `number` | Maximum total number of instances. |
 | `scale.maxInstanceLifetime` | `Duration` | Re-create instances time to time. |
 
 #### Defined in
 
-[src/CiStorage.ts:69](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L69)
+[src/CiStorage.ts:75](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L75)
 
 ___
 
@@ -128,4 +142,4 @@ runner has its localhost ports redirected to that instance.
 
 #### Defined in
 
-[src/CiStorage.ts:107](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L107)
+[src/CiStorage.ts:130](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L130)

@@ -1,9 +1,13 @@
 import { ArnFormat, Duration, Stack, Tags } from "aws-cdk-lib";
-import type { CfnAutoScalingGroup } from "aws-cdk-lib/aws-autoscaling";
+import type {
+  CfnAutoScalingGroup,
+  CronOptions,
+} from "aws-cdk-lib/aws-autoscaling";
 import {
   AutoScalingGroup,
   GroupMetrics,
   OnDemandAllocationStrategy,
+  Schedule,
   SpotAllocationStrategy,
   UpdatePolicy,
 } from "aws-cdk-lib/aws-autoscaling";
@@ -65,6 +69,8 @@ export interface CiStorageProps {
   /** A name of secret in Secrets Manager which holds GitHub PAT. This secret
    * must pre-exist. */
   ghTokenSecretName: string;
+  /** Time zone for instances, example: America/Los_Angeles. */
+  timeZone?: string;
   /** Configuration for self-hosted runner instances in the pool. */
   runner: {
     /** "{owner}/{repository}" which this self-hosted runners pool serves. */
@@ -87,14 +93,31 @@ export interface CiStorageProps {
       /** The percentages of On-Demand Instances and Spot Instances for your
        * additional capacity. */
       onDemandPercentageAboveBaseCapacity: number;
-      /** Maximum percentage of active runners. If the number of active runners
-       * grows beyond this threshold, the autoscaling group will launch new
-       * instances until the percentage drops. */
-      maxActiveRunnersPercent: number;
-      /** Minimal number of idle runners to keep. If the auto scaling group has
-       * less than this number of idle runners, the new instances will be
-       * created. */
-      minIdleRunnersCount: number;
+      /** Maximum percentage of active runners. If the MAX metric of number of
+       * active runners within the recent periodSec interval grows beyond this
+       * threshold, the autoscaling group will launch new instances until the
+       * percentage drops, or maxCapacity is reached. */
+      maxActiveRunnersPercent: {
+        /** Calculate MAX metric within that period. The higher is the value,
+         * the slower will the capacity lower (but it doesn't affect how fast
+         * will it increase). */
+        periodSec: number;
+        /** Value to use for the target percentage of active (busy) runners. */
+        value: number;
+      };
+      /** Minimal number of idle runners to keep, depending on the daytime. If
+       * the auto scaling group has less than this number of instances, the new
+       * instances will be created. */
+      minCapacity: Array<{
+        /** Alpha-numeric id of this schedule. */
+        id: string;
+        /** Value to assign to minCapacity when reaching the schedule time. Note
+         * that it doesn't apply retrospectively, i.e. there is no processing of
+         * past-due schedules in AWS. */
+        value: number;
+        /** Schedule info. Time zone example: America/Los_Angeles. */
+        cron: { timeZone?: string } & CronOptions;
+      }>;
       /** Maximum total number of instances. */
       maxCapacity: number;
       /** Re-create instances time to time. */
@@ -257,6 +280,8 @@ export class CiStorage extends Construct {
             ghDockerComposeDirectoryUrl:
               props.runner.ghDockerComposeDirectoryUrl,
             keyPairPrivateKeySecretName: this.keyPairPrivateKeySecretName,
+            timeZone: props.timeZone,
+            mount: undefined,
           }),
         ),
       );
@@ -291,7 +316,6 @@ export class CiStorage extends Construct {
       this.autoScalingGroup = new AutoScalingGroup(this, id.pascal, {
         autoScalingGroupName: keyNamer.pathKebabFrom(scope),
         vpc: this.vpc,
-        minCapacity: 1, // props.runner.scale.minIdleRunnersCount,
         maxCapacity: props.runner.scale.maxCapacity,
         maxInstanceLifetime: props.runner.scale.maxInstanceLifetime,
         mixedInstancesPolicy: {
@@ -314,27 +338,29 @@ export class CiStorage extends Construct {
         groupMetrics: [GroupMetrics.all()],
         updatePolicy: UpdatePolicy.rollingUpdate(),
       });
-      const namespace = "ci-storage/metrics";
+      Tags.of(this.autoScalingGroup).add(
+        "Name",
+        namer(keyNamer, "runner").kebab,
+      );
       this.autoScalingGroup.scaleToTrackMetric("ActiveRunnersPercent", {
         metric: new Metric({
-          namespace,
+          namespace: "ci-storage/metrics",
           metricName: "ActiveRunnersPercent",
           dimensionsMap: { GH_REPOSITORY: props.runner.ghRepository },
-          period: Duration.seconds(10),
+          period: Duration.seconds(
+            props.runner.scale.maxActiveRunnersPercent.periodSec,
+          ),
           statistic: "max",
         }),
-        targetValue: props.runner.scale.maxActiveRunnersPercent,
+        targetValue: props.runner.scale.maxActiveRunnersPercent.value,
       });
-      this.autoScalingGroup.scaleToTrackMetric("IdleRunnersCountInverse", {
-        metric: new Metric({
-          namespace,
-          metricName: "IdleRunnersCountInverse",
-          dimensionsMap: { GH_REPOSITORY: props.runner.ghRepository },
-          period: Duration.seconds(10),
-          statistic: "max",
-        }),
-        targetValue: 1000000 - props.runner.scale.minIdleRunnersCount,
-      });
+      for (const { id, value, cron } of props.runner.scale.minCapacity) {
+        this.autoScalingGroup.scaleOnSchedule(id, {
+          minCapacity: value,
+          timeZone: cron.timeZone ?? props.timeZone,
+          schedule: Schedule.cron(cron),
+        });
+      }
     }
 
     {
@@ -394,6 +420,7 @@ export class CiStorage extends Construct {
               ghDockerComposeDirectoryUrl:
                 props.host.ghDockerComposeDirectoryUrl,
               keyPairPrivateKeySecretName: this.keyPairPrivateKeySecretName,
+              timeZone: props.timeZone,
               mount: { volumeId: volume.attrVolumeId, path: "/mnt" },
             }),
           ),

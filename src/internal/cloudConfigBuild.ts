@@ -10,13 +10,15 @@ export function cloudConfigBuild({
   ghTokenSecretName,
   ghDockerComposeDirectoryUrl,
   keyPairPrivateKeySecretName,
+  timeZone,
   mount,
 }: {
   fqdn: string;
   ghTokenSecretName: string;
   ghDockerComposeDirectoryUrl: string;
   keyPairPrivateKeySecretName: string;
-  mount?: { volumeId: string; path: string };
+  timeZone: string | undefined;
+  mount: { volumeId: string; path: string } | undefined;
 }) {
   if (!ghDockerComposeDirectoryUrl.match(/^([^#]+)(?:#([^:]*):(.*))?$/s)) {
     throw (
@@ -32,6 +34,7 @@ export function cloudConfigBuild({
     'set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace';
 
   return {
+    timezone: timeZone,
     fqdn: fqdn || undefined,
     apt_sources: [
       {
@@ -58,6 +61,7 @@ export function cloudConfigBuild({
       "curl",
       "apt-transport-https",
       "ca-certificates",
+      "tzdata",
     ],
     write_files: compact([
       {
@@ -71,6 +75,16 @@ export function cloudConfigBuild({
         content: dedent(`
           vm.vfs_cache_pressure=0
           vm.swappiness=10
+        `),
+      },
+      timeZone && {
+        path: "/var/lib/cloud/scripts/per-once/define-tz-env.sh",
+        permissions: "0755",
+        content: dedent(`
+          #!/bin/bash
+          ${preamble}
+
+          echo 'TZ="${timeZone}"' >> /etc/environment
         `),
       },
       {
@@ -91,10 +105,12 @@ export function cloudConfigBuild({
           #!/bin/bash
           ${preamble}
 
-          sed -i -E \\
-            '/ExecStart=/i Environment="ENV=/etc/profile.ssm-user"' \\
-            /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service
           echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
+          mkdir -p /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/
+          (
+            echo '[Service]'
+            echo 'Environment="ENV=/etc/profile.ssm-user"'
+          ) > /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/sh-env.conf
           systemctl daemon-reload
           systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
         `),

@@ -29,6 +29,7 @@ class CiStorageStack extends Stack {
         zoneName: "test-zoneName",
       },
       ghTokenSecretName: "ci-storage/gh-token",
+      timeZone: "America/Los_Angeles",
       runner: {
         ghRepository: "time-loop/slapdash",
         ghDockerComposeDirectoryUrl:
@@ -43,8 +44,22 @@ class CiStorageStack extends Stack {
         ],
         scale: {
           onDemandPercentageAboveBaseCapacity: 10,
-          maxActiveRunnersPercent: 80,
-          minIdleRunnersCount: 5,
+          maxActiveRunnersPercent: {
+            periodSec: 600,
+            value: 70,
+          },
+          minCapacity: [
+            {
+              id: "CaWorkDayStarts",
+              value: 10,
+              cron: { hour: "8" },
+            },
+            {
+              id: "CaWorkDayEnds",
+              value: 5,
+              cron: { hour: "18" },
+            },
+          ],
           maxCapacity: 20,
           maxInstanceLifetime: Duration.days(1),
         },
