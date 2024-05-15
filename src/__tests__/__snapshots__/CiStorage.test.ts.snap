@@ -15,9 +15,9 @@ exports[`CiStorage 1`] = `
     },
   },
   "Resources": {
-    "CiStorageAutoScalingGroupASGFCC25A25": {
+    "CnstrctAsgRunnerASG489B3A08": {
       "Properties": {
-        "AutoScalingGroupName": "test-cistorage",
+        "AutoScalingGroupName": "stk-cnstrct-asgrunner",
         "Cooldown": "30",
         "DefaultInstanceWarmup": 60,
         "MaxInstanceLifetime": 86400,
@@ -37,11 +37,11 @@ exports[`CiStorage 1`] = `
           "LaunchTemplate": {
             "LaunchTemplateSpecification": {
               "LaunchTemplateId": {
-                "Ref": "CiStorageLaunchTemplate73370FC5",
+                "Ref": "CnstrctLtAEEE5196",
               },
               "Version": {
                 "Fn::GetAtt": [
-                  "CiStorageLaunchTemplate73370FC5",
+                  "CnstrctLtAEEE5196",
                   "LatestVersionNumber",
                 ],
               },
@@ -66,7 +66,7 @@ exports[`CiStorage 1`] = `
           {
             "Key": "Name",
             "PropagateAtLaunch": true,
-            "Value": "ci-storage-runner",
+            "Value": "my-ci-runner",
           },
         ],
         "VPCZoneIdentifier": [
@@ -95,59 +95,730 @@ exports[`CiStorage 1`] = `
         },
       },
     },
-    "CiStorageAutoScalingGroupScalingPolicyActiveRunnersPercent7591E33E": {
+    "CnstrctAsgRunnerActiveRunnersPercentLowerAlarm3D348E7B": {
       "Properties": {
-        "AutoScalingGroupName": {
-          "Ref": "CiStorageAutoScalingGroupASGFCC25A25",
-        },
-        "PolicyType": "TargetTrackingScaling",
-        "TargetTrackingConfiguration": {
-          "CustomizedMetricSpecification": {
-            "Dimensions": [
-              {
-                "Name": "GH_REPOSITORY",
-                "Value": "time-loop/slapdash",
-              },
-            ],
-            "MetricName": "ActiveRunnersPercent",
-            "Namespace": "ci-storage/metrics",
-            "Statistic": "Maximum",
+        "AlarmActions": [
+          {
+            "Ref": "CnstrctAsgRunnerActiveRunnersPercentLowerPolicy9E822646",
           },
-          "TargetValue": 70,
+        ],
+        "AlarmDescription": "Lower threshold scaling alarm",
+        "ComparisonOperator": "LessThanOrEqualToThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "GH_REPOSITORY",
+            "Value": "time-loop/slapdash",
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ActiveRunnersPercent",
+        "Namespace": "ci-storage/metrics",
+        "Period": 600,
+        "Statistic": "Maximum",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "my-ci-runner",
+          },
+        ],
+        "Threshold": 63,
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "CnstrctAsgRunnerActiveRunnersPercentLowerPolicy9E822646": {
+      "Properties": {
+        "AdjustmentType": "PercentChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "CnstrctAsgRunnerASG489B3A08",
         },
+        "MetricAggregationType": "Maximum",
+        "PolicyType": "StepScaling",
+        "StepAdjustments": [
+          {
+            "MetricIntervalLowerBound": -7,
+            "MetricIntervalUpperBound": 0,
+            "ScalingAdjustment": -10,
+          },
+          {
+            "MetricIntervalLowerBound": -14,
+            "MetricIntervalUpperBound": -7,
+            "ScalingAdjustment": -20,
+          },
+          {
+            "MetricIntervalLowerBound": -21,
+            "MetricIntervalUpperBound": -14,
+            "ScalingAdjustment": -30,
+          },
+          {
+            "MetricIntervalLowerBound": -28,
+            "MetricIntervalUpperBound": -21,
+            "ScalingAdjustment": -40,
+          },
+          {
+            "MetricIntervalLowerBound": -35,
+            "MetricIntervalUpperBound": -28,
+            "ScalingAdjustment": -50,
+          },
+          {
+            "MetricIntervalLowerBound": -42,
+            "MetricIntervalUpperBound": -35,
+            "ScalingAdjustment": -60,
+          },
+          {
+            "MetricIntervalLowerBound": -49,
+            "MetricIntervalUpperBound": -42,
+            "ScalingAdjustment": -70,
+          },
+          {
+            "MetricIntervalLowerBound": -56,
+            "MetricIntervalUpperBound": -49,
+            "ScalingAdjustment": -80,
+          },
+          {
+            "MetricIntervalUpperBound": -56,
+            "ScalingAdjustment": -90,
+          },
+        ],
       },
       "Type": "AWS::AutoScaling::ScalingPolicy",
     },
-    "CiStorageAutoScalingGroupScheduledActionCaWorkDayEnds58BA31B2": {
+    "CnstrctAsgRunnerActiveRunnersPercentUpperAlarm9D4818B9": {
+      "Properties": {
+        "AlarmActions": [
+          {
+            "Ref": "CnstrctAsgRunnerActiveRunnersPercentUpperPolicy07F985DA",
+          },
+        ],
+        "AlarmDescription": "Upper threshold scaling alarm",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "DatapointsToAlarm": 1,
+        "Dimensions": [
+          {
+            "Name": "GH_REPOSITORY",
+            "Value": "time-loop/slapdash",
+          },
+        ],
+        "EvaluationPeriods": 1,
+        "MetricName": "ActiveRunnersPercent",
+        "Namespace": "ci-storage/metrics",
+        "Period": 600,
+        "Statistic": "Maximum",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "my-ci-runner",
+          },
+        ],
+        "Threshold": 70,
+      },
+      "Type": "AWS::CloudWatch::Alarm",
+    },
+    "CnstrctAsgRunnerActiveRunnersPercentUpperPolicy07F985DA": {
+      "Properties": {
+        "AdjustmentType": "PercentChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "CnstrctAsgRunnerASG489B3A08",
+        },
+        "MetricAggregationType": "Maximum",
+        "PolicyType": "StepScaling",
+        "StepAdjustments": [
+          {
+            "MetricIntervalLowerBound": 0,
+            "MetricIntervalUpperBound": 3,
+            "ScalingAdjustment": 4,
+          },
+          {
+            "MetricIntervalLowerBound": 3,
+            "MetricIntervalUpperBound": 6,
+            "ScalingAdjustment": 9,
+          },
+          {
+            "MetricIntervalLowerBound": 6,
+            "MetricIntervalUpperBound": 9,
+            "ScalingAdjustment": 13,
+          },
+          {
+            "MetricIntervalLowerBound": 9,
+            "MetricIntervalUpperBound": 12,
+            "ScalingAdjustment": 17,
+          },
+          {
+            "MetricIntervalLowerBound": 12,
+            "MetricIntervalUpperBound": 15,
+            "ScalingAdjustment": 21,
+          },
+          {
+            "MetricIntervalLowerBound": 15,
+            "MetricIntervalUpperBound": 18,
+            "ScalingAdjustment": 26,
+          },
+          {
+            "MetricIntervalLowerBound": 18,
+            "MetricIntervalUpperBound": 21,
+            "ScalingAdjustment": 30,
+          },
+          {
+            "MetricIntervalLowerBound": 21,
+            "MetricIntervalUpperBound": 24,
+            "ScalingAdjustment": 34,
+          },
+          {
+            "MetricIntervalLowerBound": 24,
+            "MetricIntervalUpperBound": 27,
+            "ScalingAdjustment": 39,
+          },
+          {
+            "MetricIntervalLowerBound": 27,
+            "ScalingAdjustment": 43,
+          },
+        ],
+      },
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+    },
+    "CnstrctAsgRunnerScheduledActionCaWorkDayEnds81158DAD": {
       "Properties": {
         "AutoScalingGroupName": {
-          "Ref": "CiStorageAutoScalingGroupASGFCC25A25",
+          "Ref": "CnstrctAsgRunnerASG489B3A08",
         },
         "MinSize": 5,
-        "Recurrence": "* 18 * * *",
+        "Recurrence": "0 18 * * *",
         "TimeZone": "America/Los_Angeles",
       },
       "Type": "AWS::AutoScaling::ScheduledAction",
     },
-    "CiStorageAutoScalingGroupScheduledActionCaWorkDayStartsAAC7A1B8": {
+    "CnstrctAsgRunnerScheduledActionCaWorkDayStarts6A1CC23B": {
       "Properties": {
         "AutoScalingGroupName": {
-          "Ref": "CiStorageAutoScalingGroupASGFCC25A25",
+          "Ref": "CnstrctAsgRunnerASG489B3A08",
         },
         "MinSize": 10,
-        "Recurrence": "* 8 * * *",
+        "Recurrence": "0 8 * * *",
         "TimeZone": "America/Los_Angeles",
       },
       "Type": "AWS::AutoScaling::ScheduledAction",
     },
-    "CiStorageHost001A90FC20D0": {
+    "CnstrctHostRole5DD9F366": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/CloudWatchAgentServerPolicy",
+              ],
+            ],
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "secretsmanager:GetSecretValue",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":secretsmanager:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":secret:ec2-ssh-key/",
+                        {
+                          "Fn::GetAtt": [
+                            "CnstrctSshIdRsaEC2KeyPairstkcnstrctsshidrsaF4F38F69",
+                            "KeyPairName",
+                          ],
+                        },
+                        "/private*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "KeyPairPolicy",
+          },
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "secretsmanager:GetSecretValue",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":secretsmanager:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":secret:ci-storage/gh-token*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "GhTokenPolicy",
+          },
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "ec2:DescribeInstances",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+                {
+                  "Action": "cloudformation:SignalResource",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":cloudformation:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":stack/Stk/*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "SignalResourcePolicy",
+          },
+        ],
+        "RoleName": "StkCnstrctHostRole",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CnstrctLtAEEE5196": {
+      "DependsOn": [
+        "CnstrctRunnerRole341E54FA",
+      ],
+      "Properties": {
+        "LaunchTemplateData": {
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "DeleteOnTermination": true,
+                "Encrypted": true,
+                "VolumeSize": 50,
+                "VolumeType": "gp2",
+              },
+            },
+          ],
+          "IamInstanceProfile": {
+            "Arn": {
+              "Fn::GetAtt": [
+                "CnstrctLtProfileE3059BA8",
+                "Arn",
+              ],
+            },
+          },
+          "ImageId": {
+            "Ref": "SsmParameterValuetestimageSsmNameC96584B6F00A464EAD1953AFF4B05118Parameter",
+          },
+          "KeyName": {
+            "Fn::GetAtt": [
+              "CnstrctSshIdRsaEC2KeyPairstkcnstrctsshidrsaF4F38F69",
+              "KeyPairName",
+            ],
+          },
+          "MetadataOptions": {
+            "HttpPutResponseHopLimit": 2,
+            "HttpTokens": "required",
+          },
+          "Monitoring": {
+            "Enabled": true,
+          },
+          "SecurityGroupIds": [
+            {
+              "Fn::GetAtt": [
+                "CnstrctSgF5C70BA4",
+                "GroupId",
+              ],
+            },
+          ],
+          "TagSpecifications": [
+            {
+              "ResourceType": "instance",
+              "Tags": [
+                {
+                  "Key": "Name",
+                  "Value": "Stk/Cnstrct/Lt",
+                },
+              ],
+            },
+            {
+              "ResourceType": "volume",
+              "Tags": [
+                {
+                  "Key": "Name",
+                  "Value": "Stk/Cnstrct/Lt",
+                },
+              ],
+            },
+          ],
+          "UserData": {
+            "Fn::Base64": {
+              "Fn::Join": [
+                "",
+                [
+                  "#cloud-config
+timezone: America/Los_Angeles
+swap:
+  filename: /var/swapfile
+  size: auto
+  maxsize: 8589934592
+mounts:
+  - - tmpfs
+    - /var/lib/docker
+    - tmpfs
+    - defaults,noatime,exec,mode=0710,nr_inodes=0,size=4G
+    - "0"
+    - "0"
+apt_sources:
+  - source: deb https://cli.github.com/packages stable main
+    keyid: 23F3D4EA75716059
+    filename: github-cli.list
+  - source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
+    keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+    filename: docker.list
+packages:
+  - awscli
+  - gh
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-compose-plugin
+  - qemu
+  - qemu-user-static
+  - binfmt-support
+  - git
+  - gosu
+  - mc
+  - curl
+  - apt-transport-https
+  - ca-certificates
+  - tzdata
+  - atop
+  - iotop
+  - htop
+  - bwm-ng
+  - jq
+write_files:
+  - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
+    content: |
+      net.ipv4.conf.all.forwarding=1
+  - path: /etc/default/atop
+    content: |
+      LOGOPTS="-R"
+      LOGINTERVAL=15
+      LOGGENERATIONS=4
+  - path: /etc/environment
+    append: true
+    content: |
+      TZ="America/Los_Angeles"
+  - path: /etc/environment
+    append: true
+    content: |
+      LESS="RS"
+  - path: /etc/docker/daemon.json
+    permissions: "0644"
+    content: |
+      {
+        "log-driver": "syslog",
+        "log-opts": {
+          "tag": "docker/{{.Name}}"
+        },
+        "runtimes": {
+          "sysbox-runc": {
+            "path": "/usr/bin/sysbox-runc"
+          }
+        },
+        "default-runtime": "sysbox-runc",
+        "userns-remap": "sysbox"
+      }
+  - path: /var/lib/cloud/scripts/per-once/apply-services-configs.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      service atop restart || true
+      sysctl --system
+  - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      sed -i -E '/TimeoutStartSec=.*/a TimeoutStopSec=3600' /usr/lib/systemd/system/docker.service
+      systemctl daemon-reload
+  - path: /var/lib/cloud/scripts/per-once/add-ubuntu-user-to-docker-group-to-access-socket.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      usermod -aG docker ubuntu
+  - path: /var/lib/cloud/scripts/per-once/install-sysbox-for-docker-in-docker.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      systemctl stop docker docker.socket || true
+      wget -nv -O /tmp/sysbox-ce.deb "https://downloads.nestybox.com/sysbox/releases/v0.6.4/sysbox-ce_0.6.4-0.linux_$(dpkg --print-architecture).deb"
+      dpkg -i /tmp/sysbox-ce.deb
+      rm -f /tmp/sysbox-ce.deb
+  - path: /var/lib/cloud/scripts/per-once/switch-ssm-user-to-ubuntu-on-login.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
+      mkdir -p /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/
+      (
+        echo '[Service]'
+        echo 'Environment="ENV=/etc/profile.ssm-user"'
+      ) > /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/sh-env.conf
+      systemctl daemon-reload
+      systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+  - path: /etc/rsyslog.d/01-docker-tag-to-serial-console.conf
+    permissions: "0644"
+    content: |
+      if $syslogtag startswith 'docker/' then -/dev/console
+      # It will also write to /var/log/syslog as usual.
+  - path: /var/lib/cloud/scripts/per-once/allow-rsyslog-write-to-serial-console.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      usermod -a -G tty syslog
+      systemctl restart rsyslog
+  - path: /var/lib/cloud/scripts/per-boot/run-docker-compose-on-boot.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      echo "*/2 * * * * ubuntu /home/ubuntu/run-docker-compose.sh --no-logs 2>&1 | logger -t docker/run-docker-compose" > /etc/cron.d/run-docker-compose
+      exec /home/ubuntu/run-docker-compose.sh
+  - path: /home/ubuntu/run-docker-compose.sh
+    owner: ubuntu:ubuntu
+    permissions: "0755"
+    defer: true
+    content: |
+      #!/bin/bash
+
+      # Switch to non-privileged user if running as root.
+      if [[ $(whoami) != "ubuntu" ]]; then
+        exec gosu ubuntu "$BASH_SOURCE" "$@"
+      fi
+
+      # Ensure there is only one instance of this script running.
+      exec {FD}<$BASH_SOURCE
+      flock -n "$FD" || { echo "Already running."; exit 0; }
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+
+      # Make sure we're using the right timezone; it may be not up
+      # to date in the current environment during the very 1st run
+      # from run-docker-compose-on-boot.sh.
+      source /etc/environment
+      export TZ
+
+      # Load private and public keys from Secrets Manager to ~/.ssh.
+      mkdir -p ~/.ssh && chmod 700 ~/.ssh
+      aws secretsmanager get-secret-value \\
+        --secret-id "ec2-ssh-key/",
+                  {
+                    "Fn::GetAtt": [
+                      "CnstrctSshIdRsaEC2KeyPairstkcnstrctsshidrsaF4F38F69",
+                      "KeyPairName",
+                    ],
+                  },
+                  "/private" \\
+        --query SecretString --output text \\
+        > ~/.ssh/ci-storage
+      chmod 600 ~/.ssh/ci-storage
+      ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
+
+      # Load GitHub PAT from Secrets Manager and log in to GitHub.
+      aws secretsmanager get-secret-value \\
+        --secret-id "ci-storage/gh-token" \\
+        --query SecretString --output text \\
+        | gh auth login --with-token
+      gh auth setup-git
+
+      # Log in to ghcr.io every hour.
+      config=~/.docker/config.json
+      if [[ ! -f $config ]] || find "$config" -type f -mmin +60 | grep -q .; then
+        gh auth token | docker login ghcr.io -u "$(gh api user -q .login)" --password-stdin
+      fi
+
+      # Pull the repository.
+      mkdir -p ~/git && cd ~/git
+      if [[ ! -d .git ]]; then
+        git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
+        if [[ "docker" != "." ]]; then
+          git sparse-checkout set --no-cone "docker"
+        fi
+        git checkout
+      else
+        git pull --rebase
+      fi
+
+      # Process some tokens and print rate limits without xtrace.
+      set +o xtrace
+      GH_TOKEN=$(gh auth token)
+      echo "Docker Hub Rate Limits:"
+      docker_hub_token=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token || true)
+      curl -s --head -H "Authorization: Bearer $docker_hub_token" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest | grep ratelimit || true
+      echo "GitHub Core Rate Limits:"
+      gh api -i -X HEAD /rate_limit | grep Ratelimit
+      set -o xtrace
+
+      # Export env vars for docker compose.
+      export GH_TOKEN
+      export GH_REPOSITORY="time-loop/slapdash"
+      export GH_LABELS="my-ci,ci-storage"
+      export FORWARD_HOST="my-ci-host-001.test-zoneName"
+
+      # It it's the very 1st run, start Docker service. We do not start it every run,
+      # because otherwise we wouldn't be able to "systemctl stop docker docker.socket"
+      # manually or while copying files from the old host.
+      file=~/.docker-started-after-first-git-clone
+      if [[ ! -f $file ]]; then
+        sudo systemctl start docker docker.socket
+        touch $file
+      fi
+
+      # Run docker compose.
+      cd "docker"
+      docker pull ghcr.io/dimikot/ci-storage:main || true
+      docker pull ghcr.io/dimikot/ci-runner:main || true
+      docker compose up --build --remove-orphans -d
+      sleep 5
+      if [[ "$1" != "--no-logs" ]]; then
+        docker compose logs -n 10
+      fi
+      docker system prune --volumes -f
+  - path: /home/ubuntu/.bash_profile
+    owner: ubuntu:ubuntu
+    permissions: "0644"
+    defer: true
+    content: |
+      #!/bin/bash
+      C_CMD="\\033[0;36m"
+      C_NO="\\033[0m"
+      if [[ -d ~/git/"docker" ]]; then
+        cd ~/git/"docker"
+        echo -e "$C_CMD\\$ docker compose ps$C_NO"
+        docker --log-level=ERROR compose ps --format="table {{.Service}}\\t{{.Status}}\\t{{.Ports}}"
+        services=$(docker compose ps --format '{{.Service}}' 2>/dev/null)
+        if [[ "$services" != "" && $(echo "$services" | wc -l) -eq 1 ]]; then
+          cmd="docker compose exec $services bash -l"
+          echo -e "$C_CMD\\$ $cmd$C_NO"
+          eval "$cmd"
+        fi
+      fi
+",
+                ],
+              ],
+            },
+          },
+        },
+        "LaunchTemplateName": "stk-cnstrct-lt",
+        "TagSpecifications": [
+          {
+            "ResourceType": "launch-template",
+            "Tags": [
+              {
+                "Key": "Name",
+                "Value": "Stk/Cnstrct/Lt",
+              },
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::EC2::LaunchTemplate",
+    },
+    "CnstrctLtProfileE3059BA8": {
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "CnstrctRunnerRole341E54FA",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::InstanceProfile",
+    },
+    "CnstrctMyCiHost001A9DE30324": {
       "Properties": {
         "HostedZoneId": "test-hostedZoneId",
-        "Name": "ci-storage-host-001.test-zoneName.",
+        "Name": "my-ci-host-001.test-zoneName.",
         "ResourceRecords": [
           {
             "Fn::GetAtt": [
-              "CiStorageHost001Instance74416F6B4260e81d2d555257",
+              "CnstrctStkCnstrctMyCiHost001InstanceCCA3759A90e3e9f8dfbab5f0",
               "PrivateIp",
             ],
           },
@@ -157,9 +828,282 @@ exports[`CiStorage 1`] = `
       },
       "Type": "AWS::Route53::RecordSet",
     },
-    "CiStorageHost001Instance74416F6B4260e81d2d555257": {
+    "CnstrctRunnerRole341E54FA": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ec2.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+              ],
+            ],
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/CloudWatchAgentServerPolicy",
+              ],
+            ],
+          },
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "secretsmanager:GetSecretValue",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":secretsmanager:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":secret:ec2-ssh-key/",
+                        {
+                          "Fn::GetAtt": [
+                            "CnstrctSshIdRsaEC2KeyPairstkcnstrctsshidrsaF4F38F69",
+                            "KeyPairName",
+                          ],
+                        },
+                        "/private*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "KeyPairPolicy",
+          },
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "secretsmanager:GetSecretValue",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":secretsmanager:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":secret:ci-storage/gh-token*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "GhTokenPolicy",
+          },
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "ec2:DescribeInstances",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+                {
+                  "Action": "cloudformation:SignalResource",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":cloudformation:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":stack/Stk/*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "SignalResourcePolicy",
+          },
+        ],
+        "RoleName": "StkCnstrctRunnerRole",
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "CnstrctSgF5C70BA4": {
+      "Properties": {
+        "GroupDescription": "stk-cnstrct-sg",
+        "GroupName": "stk-cnstrct-sg",
+        "SecurityGroupEgress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "Description": "Allow all outbound traffic by default",
+            "IpProtocol": "-1",
+          },
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "stk-cnstrct-sg",
+          },
+        ],
+        "VpcId": {
+          "Ref": "Vpc8378EB38",
+        },
+      },
+      "Type": "AWS::EC2::SecurityGroup",
+    },
+    "CnstrctSgfromStkCnstrctSgCE9C2C74100223764E466": {
+      "Properties": {
+        "Description": "from runners and host to ci-storage container",
+        "FromPort": 10022,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "CnstrctSgF5C70BA4",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "CnstrctSgF5C70BA4",
+            "GroupId",
+          ],
+        },
+        "ToPort": 10022,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "CnstrctSgfromStkCnstrctSgCE9C2C74226B452137": {
+      "Properties": {
+        "Description": "from runners and host to SSH",
+        "FromPort": 22,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "CnstrctSgF5C70BA4",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "CnstrctSgF5C70BA4",
+            "GroupId",
+          ],
+        },
+        "ToPort": 22,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "CnstrctSgfromStkCnstrctSgCE9C2C744200042042B0BB20A9": {
+      "Properties": {
+        "Description": "from runners and host to test ports",
+        "FromPort": 42000,
+        "GroupId": {
+          "Fn::GetAtt": [
+            "CnstrctSgF5C70BA4",
+            "GroupId",
+          ],
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Fn::GetAtt": [
+            "CnstrctSgF5C70BA4",
+            "GroupId",
+          ],
+        },
+        "ToPort": 42042,
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress",
+    },
+    "CnstrctSshIdRsaEC2KeyPairstkcnstrctsshidrsaF4F38F69": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "Description": "Used to access ci-storage host from self-hosted runner nodes.",
+        "ExposePublicKey": false,
+        "KmsPrivate": "alias/aws/secretsmanager",
+        "KmsPublic": "alias/aws/secretsmanager",
+        "Name": "stk-cnstrct-sshidrsa",
+        "PublicKey": "",
+        "PublicKeyFormat": "OPENSSH",
+        "RemoveKeySecretsAfterDays": 0,
+        "SecretPrefix": "ec2-ssh-key/",
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "EC2KeyNameManagerLambdaBE629145",
+            "Arn",
+          ],
+        },
+        "StackName": "Stk",
+        "StorePublicKey": false,
+        "Tags": {
+          "CreatedByCfnCustomResource": "CFN::Resource::Custom::EC2-Key-Pair",
+        },
+      },
+      "Type": "Custom::EC2-Key-Pair",
+      "UpdateReplacePolicy": "Delete",
+    },
+    "CnstrctStkCnstrctMyCiHost001InstanceCCA3759A90e3e9f8dfbab5f0": {
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Count": 1,
+          "Timeout": "PT15M",
+        },
+      },
       "DependsOn": [
-        "CiStorageHostRole9FF47CEB",
+        "CnstrctHostRole5DD9F366",
       ],
       "Properties": {
         "AvailabilityZone": {
@@ -182,7 +1126,7 @@ exports[`CiStorage 1`] = `
           },
         ],
         "IamInstanceProfile": {
-          "Ref": "CiStorageHost001InstanceInstanceProfileAF3BBAE6",
+          "Ref": "CnstrctStkCnstrctMyCiHost001InstanceInstanceProfile2045E5AE",
         },
         "ImageId": {
           "Ref": "SsmParameterValuetestimageSsmNameC96584B6F00A464EAD1953AFF4B05118Parameter",
@@ -190,21 +1134,27 @@ exports[`CiStorage 1`] = `
         "InstanceType": "t3.large",
         "KeyName": {
           "Fn::GetAtt": [
-            "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+            "CnstrctSshIdRsaEC2KeyPairstkcnstrctsshidrsaF4F38F69",
             "KeyPairName",
           ],
         },
         "LaunchTemplate": {
-          "LaunchTemplateName": "Host001InstanceLaunchTemplate",
+          "LaunchTemplateName": "StkCnstrctMyCiHost001InstanceLaunchTemplate",
           "Version": {
             "Fn::GetAtt": [
-              "CiStorageHost001InstanceLaunchTemplate75DE93DE",
+              "CnstrctStkCnstrctMyCiHost001InstanceLaunchTemplateD3F24170",
               "LatestVersionNumber",
             ],
           },
         },
+        "Monitoring": true,
         "SecurityGroupIds": [
-          "test-securityGroupId",
+          {
+            "Fn::GetAtt": [
+              "CnstrctSgF5C70BA4",
+              "GroupId",
+            ],
+          },
         ],
         "SubnetId": {
           "Ref": "VpcPrivateSubnet1Subnet536B997A",
@@ -212,7 +1162,7 @@ exports[`CiStorage 1`] = `
         "Tags": [
           {
             "Key": "Name",
-            "Value": "ci-storage-host-001.test-zoneName",
+            "Value": "my-ci-host-001.test-zoneName",
           },
         ],
         "UserData": {
@@ -222,7 +1172,15 @@ exports[`CiStorage 1`] = `
               [
                 "#cloud-config
 timezone: America/Los_Angeles
-fqdn: ci-storage-host-001.test-zoneName
+fqdn: my-ci-host-001.test-zoneName
+hostname: my-ci-host-001.test-zoneName
+mounts:
+  - - tmpfs
+    - /var/lib/docker
+    - tmpfs
+    - defaults,noatime,exec,mode=0710,nr_inodes=0,size=4G
+    - "0"
+    - "0"
 apt_sources:
   - source: deb https://cli.github.com/packages stable main
     keyid: 23F3D4EA75716059
@@ -237,6 +1195,9 @@ packages:
   - docker-ce-cli
   - containerd.io
   - docker-compose-plugin
+  - qemu
+  - qemu-user-static
+  - binfmt-support
   - git
   - gosu
   - mc
@@ -244,35 +1205,78 @@ packages:
   - apt-transport-https
   - ca-certificates
   - tzdata
+  - atop
+  - iotop
+  - htop
+  - bwm-ng
+  - jq
 write_files:
   - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
     content: |
       net.ipv4.conf.all.forwarding=1
-  - path: /etc/sysctl.d/lower-fs-inodes-eviction-from-cache.conf
+  - path: /etc/default/atop
     content: |
-      vm.vfs_cache_pressure=0
-      vm.swappiness=10
-  - path: /var/lib/cloud/scripts/per-once/define-tz-env.sh
+      LOGOPTS="-R"
+      LOGINTERVAL=15
+      LOGGENERATIONS=4
+  - path: /etc/environment
+    append: true
+    content: |
+      TZ="America/Los_Angeles"
+  - path: /etc/environment
+    append: true
+    content: |
+      LESS="RS"
+  - path: /etc/docker/daemon.json
+    permissions: "0644"
+    content: |
+      {
+        "log-driver": "syslog",
+        "log-opts": {
+          "tag": "docker/{{.Name}}"
+        },
+        "runtimes": {
+          "sysbox-runc": {
+            "path": "/usr/bin/sysbox-runc"
+          }
+        },
+        "default-runtime": "sysbox-runc",
+        "userns-remap": "sysbox"
+      }
+  - path: /var/lib/cloud/scripts/per-once/apply-services-configs.sh
     permissions: "0755"
     content: |
       #!/bin/bash
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
-
-      echo 'TZ="America/Los_Angeles"' >> /etc/environment
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      service atop restart || true
+      sysctl --system
   - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
     permissions: "0755"
     content: |
       #!/bin/bash
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
-
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
       sed -i -E '/TimeoutStartSec=.*/a TimeoutStopSec=3600' /usr/lib/systemd/system/docker.service
       systemctl daemon-reload
+  - path: /var/lib/cloud/scripts/per-once/add-ubuntu-user-to-docker-group-to-access-socket.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      usermod -aG docker ubuntu
+  - path: /var/lib/cloud/scripts/per-once/install-sysbox-for-docker-in-docker.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      systemctl stop docker docker.socket || true
+      wget -nv -O /tmp/sysbox-ce.deb "https://downloads.nestybox.com/sysbox/releases/v0.6.4/sysbox-ce_0.6.4-0.linux_$(dpkg --print-architecture).deb"
+      dpkg -i /tmp/sysbox-ce.deb
+      rm -f /tmp/sysbox-ce.deb
   - path: /var/lib/cloud/scripts/per-once/switch-ssm-user-to-ubuntu-on-login.sh
     permissions: "0755"
     content: |
       #!/bin/bash
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
-
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
       echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
       mkdir -p /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/
       (
@@ -281,102 +1285,93 @@ write_files:
       ) > /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/sh-env.conf
       systemctl daemon-reload
       systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
-  - path: /var/lib/cloud/scripts/per-once/detach-volume-from-old-instance-and-mount.sh
+  - path: /var/lib/cloud/scripts/per-once/rsync-tmpfs-volume-from-old-instance.sh
     permissions: "0755"
     content: |
       #!/bin/bash
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
 
-      export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
-      volume_id="",
+      instance_id=$(ec2metadata --instance-id)
+      stack_name=$(
+        aws ec2 describe-tags \\
+        --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=aws:cloudformation:stack-name" \\
+        --query "Tags[0].Value" --output text
+      )
+      logical_id=$(
+        aws ec2 describe-tags \\
+        --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=aws:cloudformation:logical-id" \\
+        --query "Tags[0].Value" --output text
+      )
+      old_instance_ip_addr=$(
+        aws ec2 describe-instances \\
+        --filters "Name=tag:Name,Values=my-ci-host-001.test-zoneName" "Name=instance-state-name,Values=running" \\
+        --query "Reservations[*].Instances[*].[InstanceId,PrivateIpAddress]" --output text \\
+        | grep -v "$instance_id" | awk '{print $2}' | head -n1 || true
+      )
+
+      if [[ "$old_instance_ip_addr" != "" ]]; then
+        # Load private key from Secrets Manager to ~/.ssh, to access the old host.
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        aws secretsmanager get-secret-value \\
+          --secret-id "ec2-ssh-key/",
                 {
                   "Fn::GetAtt": [
-                    "CiStorageHost001Volume0C0FD514",
-                    "VolumeId",
+                    "CnstrctSshIdRsaEC2KeyPairstkcnstrctsshidrsaF4F38F69",
+                    "KeyPairName",
                   ],
                 },
-                ""
-      volume_hash="\${volume_id##vol-}"
-      volume_dir="/mnt"
-      volume_label="MNT"
-      instance_id=$(ec2metadata --instance-id)
+                "/private" \\
+          --query SecretString --output text \\
+          > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
 
-      # Stop the old instances. This causes a small downtime of the host
-      # service, but it's acceptable for the CI use case.
-      old_instance_id=$(
-        aws ec2 describe-volumes \\
-          --volume-ids "$volume_id" \\
-          --query "Volumes[].Attachments[].InstanceId" \\
-          --output text
-      )
-      if [[ "$old_instance_id" != "" ]]; then
-        sent_command=0
-        while ! aws ec2 describe-instances \\
-          --instance-ids "$old_instance_id" \\
-          --query "Reservations[].Instances[].State.Name" \\
-          --output text \\
-          | egrep -q "stopped|terminated"
-        do
-          if [[ "$sent_command" == "0" ]]; then
-            sent_command=1
-            aws ec2 stop-instances --instance-ids "$old_instance_id" || true
-          fi
-          sleep 1
-        done
+        # Stop Docker service on the current host.
+        systemctl stop docker docker.socket || true
+
+        # Stop Docker service on the old (source) host.
+        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \\
+          "ubuntu@$old_instance_ip_addr" "sudo systemctl stop docker docker.socket || true"
+
+        # 1. Surprisingly, it takes almost the same amount of time to rsync-init
+        #    (if we would run it without stopping Docker on the old host first)
+        #    as to the follow-up rsync-over (after we stopped Docker on the source).
+        #    This is probably because of the RAM drive and large Docker volumes. So
+        #    we skip rsync-init and just go with one full rsync run (with downtime).
+        # 2. Also, compression (even the fastest one) doesn't speed it up; probably
+        #    because AWS network is faster than instances CPU still.
+        time rsync \\
+          -aHXS --one-file-system --numeric-ids --delete $@ \\
+          --rsh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \\
+          --rsync-path="sudo rsync" \\
+          "ubuntu@$old_instance_ip_addr:/var/lib/docker/" "/var/lib/docker/"
+
+        # We do NOT start Docker service here! Otherwise, it may auto-start some
+        # containers, those containers will expect the git directory to exist,
+        # although it may not exist yet. So, we start Docker service in
+        # run-docker-compose.sh (its 1st run), when we are sure that git is pulled.
       fi
 
-      # Detach volume from the old instance.
-      sent_command=0
-      while ! aws ec2 describe-volumes \\
-        --volume-ids "$volume_id" \\
-        --query "Volumes[].State" \\
-        --output text \\
-        | grep -q available
-      do
-        if [[ "$sent_command" == "0" ]]; then
-          sent_command=1
-          aws ec2 detach-volume --volume-id "$volume_id" --force || true
-        fi
-        sleep 0.2;
-      done
-
-      # Attach volume to this instance and wait for the device to appear.
-      sent_command=0
-      while ! ls /dev/disk/by-id | grep -q "$volume_hash"; do
-        if [[ "$sent_command" == "0" ]]; then
-          sent_command=1
-          aws ec2 attach-volume --volume-id "$volume_id" --instance-id "$instance_id" --device /dev/sdf
-        fi
-        sleep 0.2
-      done
-
-      # Mount volume if it already exists, or create the filesystem.
-      lsblk
-      ls -la /dev/disk/by-id
-      device=$(echo /dev/disk/by-id/*$volume_hash)
-      if ! grep -q "LABEL=$volume_label" /etc/fstab; then
-        echo "LABEL=$volume_label $volume_dir auto defaults,noatime,data=writeback 0 0" >> /etc/fstab
-      fi
-      mount -a || true
-      if ! mountpoint "$volume_dir"; then
-        mkfs -t ext4 "$device"
-        tune2fs -L "$volume_label" "$device"
-        mount -a
-        systemctl stop docker docker.socket
-        ls -la /var/lib/docker
-        cp -axT /var/lib/docker "$volume_dir/var_lib_docker"
-        mv -f /var/lib/docker /var/lib/docker.old
-        ln -sT "$volume_dir/var_lib_docker" /var/lib/docker
-        systemctl start docker docker.socket
-      fi
-      ls -la "$volume_dir"
+      aws cloudformation signal-resource \\
+        --stack-name "$stack_name" --logical-resource-id "$logical_id" \\
+        --unique-id "$instance_id" --status SUCCESS
+  - path: /etc/rsyslog.d/01-docker-tag-to-serial-console.conf
+    permissions: "0644"
+    content: |
+      if $syslogtag startswith 'docker/' then -/dev/console
+      # It will also write to /var/log/syslog as usual.
+  - path: /var/lib/cloud/scripts/per-once/allow-rsyslog-write-to-serial-console.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      usermod -a -G tty syslog
+      systemctl restart rsyslog
   - path: /var/lib/cloud/scripts/per-boot/run-docker-compose-on-boot.sh
     permissions: "0755"
     content: |
       #!/bin/bash
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
-
-      echo "*/1 * * * * ubuntu /home/ubuntu/run-docker-compose.sh 2>&1 | logger -t run-docker-compose" > /etc/cron.d/run-docker-compose
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      echo "*/2 * * * * ubuntu /home/ubuntu/run-docker-compose.sh --no-logs 2>&1 | logger -t docker/run-docker-compose" > /etc/cron.d/run-docker-compose
       exec /home/ubuntu/run-docker-compose.sh
   - path: /home/ubuntu/run-docker-compose.sh
     owner: ubuntu:ubuntu
@@ -387,22 +1382,27 @@ write_files:
 
       # Switch to non-privileged user if running as root.
       if [[ $(whoami) != "ubuntu" ]]; then
-        exec gosu ubuntu:ubuntu "$BASH_SOURCE"
+        exec gosu ubuntu "$BASH_SOURCE" "$@"
       fi
 
       # Ensure there is only one instance of this script running.
       exec {FD}<$BASH_SOURCE
       flock -n "$FD" || { echo "Already running."; exit 0; }
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
+      set -e -o pipefail && echo ================ && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+
+      # Make sure we're using the right timezone; it may be not up
+      # to date in the current environment during the very 1st run
+      # from run-docker-compose-on-boot.sh.
+      source /etc/environment
+      export TZ
 
       # Load private and public keys from Secrets Manager to ~/.ssh.
-      export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
       mkdir -p ~/.ssh && chmod 700 ~/.ssh
       aws secretsmanager get-secret-value \\
         --secret-id "ec2-ssh-key/",
                 {
                   "Fn::GetAtt": [
-                    "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
+                    "CnstrctSshIdRsaEC2KeyPairstkcnstrctsshidrsaF4F38F69",
                     "KeyPairName",
                   ],
                 },
@@ -412,12 +1412,18 @@ write_files:
       chmod 600 ~/.ssh/ci-storage
       ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
 
-      # Load GitHub PAT from Secrets Manager and login to GitHub.
+      # Load GitHub PAT from Secrets Manager and log in to GitHub.
       aws secretsmanager get-secret-value \\
         --secret-id "ci-storage/gh-token" \\
         --query SecretString --output text \\
         | gh auth login --with-token
       gh auth setup-git
+
+      # Log in to ghcr.io every hour.
+      config=~/.docker/config.json
+      if [[ ! -f $config ]] || find "$config" -type f -mmin +60 | grep -q .; then
+        gh auth token | docker login ghcr.io -u "$(gh api user -q .login)" --password-stdin
+      fi
 
       # Pull the repository.
       mkdir -p ~/git && cd ~/git
@@ -431,24 +1437,56 @@ write_files:
         git pull --rebase
       fi
 
-      # Run docker compose.
-      sudo usermod -aG docker ubuntu
-      export GH_TOKEN
+      # Process some tokens and print rate limits without xtrace.
       set +o xtrace
       GH_TOKEN=$(gh auth token)
+      echo "Docker Hub Rate Limits:"
+      docker_hub_token=$(curl -s "https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull" | jq -r .token || true)
+      curl -s --head -H "Authorization: Bearer $docker_hub_token" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest | grep ratelimit || true
+      echo "GitHub Core Rate Limits:"
+      gh api -i -X HEAD /rate_limit | grep Ratelimit
       set -o xtrace
-      exec sg docker -c 'cd "docker" && docker compose pull && exec docker compose up --build -d'
+
+      # Export env vars for docker compose.
+      export GH_TOKEN
+
+      # It it's the very 1st run, start Docker service. We do not start it every run,
+      # because otherwise we wouldn't be able to "systemctl stop docker docker.socket"
+      # manually or while copying files from the old host.
+      file=~/.docker-started-after-first-git-clone
+      if [[ ! -f $file ]]; then
+        sudo systemctl start docker docker.socket
+        touch $file
+      fi
+
+      # Run docker compose.
+      cd "docker"
+      docker pull ghcr.io/dimikot/ci-storage:main || true
+      docker pull ghcr.io/dimikot/ci-runner:main || true
+      docker compose --profile=ci up --build --remove-orphans -d
+      sleep 5
+      if [[ "$1" != "--no-logs" ]]; then
+        docker compose logs -n 10
+      fi
+      docker system prune --volumes -f
   - path: /home/ubuntu/.bash_profile
     owner: ubuntu:ubuntu
     permissions: "0644"
     defer: true
     content: |
       #!/bin/bash
-      if [ -d ~/git/"docker" ]; then
+      C_CMD="\\033[0;36m"
+      C_NO="\\033[0m"
+      if [[ -d ~/git/"docker" ]]; then
         cd ~/git/"docker"
-        echo '$ docker compose ps'
+        echo -e "$C_CMD\\$ docker compose ps$C_NO"
         docker --log-level=ERROR compose ps --format="table {{.Service}}\\t{{.Status}}\\t{{.Ports}}"
-        echo
+        services=$(docker compose ps --format '{{.Service}}' 2>/dev/null)
+        if [[ "$services" != "" && $(echo "$services" | wc -l) -eq 1 ]]; then
+          cmd="docker compose exec $services bash -l"
+          echo -e "$C_CMD\\$ $cmd$C_NO"
+          eval "$cmd"
+        fi
       fi
 ",
               ],
@@ -458,628 +1496,26 @@ write_files:
       },
       "Type": "AWS::EC2::Instance",
     },
-    "CiStorageHost001InstanceInstanceProfileAF3BBAE6": {
+    "CnstrctStkCnstrctMyCiHost001InstanceInstanceProfile2045E5AE": {
       "Properties": {
         "Roles": [
           {
-            "Ref": "CiStorageHostRole9FF47CEB",
+            "Ref": "CnstrctHostRole5DD9F366",
           },
         ],
       },
       "Type": "AWS::IAM::InstanceProfile",
     },
-    "CiStorageHost001InstanceLaunchTemplate75DE93DE": {
+    "CnstrctStkCnstrctMyCiHost001InstanceLaunchTemplateD3F24170": {
       "Properties": {
         "LaunchTemplateData": {
           "MetadataOptions": {
             "HttpTokens": "required",
           },
         },
-        "LaunchTemplateName": "Host001InstanceLaunchTemplate",
+        "LaunchTemplateName": "StkCnstrctMyCiHost001InstanceLaunchTemplate",
       },
       "Type": "AWS::EC2::LaunchTemplate",
-    },
-    "CiStorageHost001Volume0C0FD514": {
-      "Properties": {
-        "AutoEnableIO": true,
-        "AvailabilityZone": {
-          "Fn::Select": [
-            0,
-            {
-              "Fn::GetAZs": "",
-            },
-          ],
-        },
-        "Encrypted": true,
-        "Iops": 3000,
-        "Size": 200,
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": "test-cistorage-host001volume",
-          },
-        ],
-        "Throughput": 125,
-        "VolumeType": "gp3",
-      },
-      "Type": "AWS::EC2::Volume",
-    },
-    "CiStorageHostRole9FF47CEB": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "ec2.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/service-role/AmazonEC2RoleforSSM",
-              ],
-            ],
-          },
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/CloudWatchAgentServerPolicy",
-              ],
-            ],
-          },
-        ],
-        "Policies": [
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": "secretsmanager:GetSecretValue",
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::Join": [
-                      "",
-                      [
-                        "arn:",
-                        {
-                          "Ref": "AWS::Partition",
-                        },
-                        ":secretsmanager:",
-                        {
-                          "Ref": "AWS::Region",
-                        },
-                        ":",
-                        {
-                          "Ref": "AWS::AccountId",
-                        },
-                        ":secret:ec2-ssh-key/",
-                        {
-                          "Fn::GetAtt": [
-                            "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
-                            "KeyPairName",
-                          ],
-                        },
-                        "/private*",
-                      ],
-                    ],
-                  },
-                },
-              ],
-              "Version": "2012-10-17",
-            },
-            "PolicyName": "CiStorageKeyPairPolicy",
-          },
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": "secretsmanager:GetSecretValue",
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::Join": [
-                      "",
-                      [
-                        "arn:",
-                        {
-                          "Ref": "AWS::Partition",
-                        },
-                        ":secretsmanager:",
-                        {
-                          "Ref": "AWS::Region",
-                        },
-                        ":",
-                        {
-                          "Ref": "AWS::AccountId",
-                        },
-                        ":secret:ci-storage/gh-token*",
-                      ],
-                    ],
-                  },
-                },
-              ],
-              "Version": "2012-10-17",
-            },
-            "PolicyName": "CiStorageGhTokenPolicy",
-          },
-        ],
-        "RoleName": "TestCiStorageHostRole",
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "CiStorageHostVolumePolicy81A8AB83": {
-      "Properties": {
-        "PolicyDocument": {
-          "Statement": [
-            {
-              "Action": [
-                "ec2:DescribeVolumes",
-                "ec2:DescribeInstances",
-              ],
-              "Effect": "Allow",
-              "Resource": "*",
-            },
-            {
-              "Action": [
-                "ec2:StopInstances",
-                "ec2:DetachVolume",
-                "ec2:AttachVolume",
-              ],
-              "Condition": {
-                "StringEquals": {
-                  "ec2:ResourceTag/aws:cloudformation:stack-name": "Test",
-                },
-              },
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:",
-                      {
-                        "Ref": "AWS::Partition",
-                      },
-                      ":ec2:",
-                      {
-                        "Ref": "AWS::Region",
-                      },
-                      ":",
-                      {
-                        "Ref": "AWS::AccountId",
-                      },
-                      ":instance/*",
-                    ],
-                  ],
-                },
-                {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:",
-                      {
-                        "Ref": "AWS::Partition",
-                      },
-                      ":ec2:",
-                      {
-                        "Ref": "AWS::Region",
-                      },
-                      ":",
-                      {
-                        "Ref": "AWS::AccountId",
-                      },
-                      ":volume/*",
-                    ],
-                  ],
-                },
-              ],
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "PolicyName": "CiStorageHostVolumePolicy",
-        "Roles": [
-          {
-            "Ref": "CiStorageHostRole9FF47CEB",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::Policy",
-    },
-    "CiStorageLaunchTemplate73370FC5": {
-      "DependsOn": [
-        "CiStorageRunnerRole9B60440E",
-      ],
-      "Properties": {
-        "LaunchTemplateData": {
-          "BlockDeviceMappings": [
-            {
-              "DeviceName": "/dev/sda1",
-              "Ebs": {
-                "DeleteOnTermination": true,
-                "Encrypted": true,
-                "VolumeSize": 50,
-                "VolumeType": "gp2",
-              },
-            },
-          ],
-          "IamInstanceProfile": {
-            "Arn": {
-              "Fn::GetAtt": [
-                "CiStorageLaunchTemplateProfile1CF26B91",
-                "Arn",
-              ],
-            },
-          },
-          "ImageId": {
-            "Ref": "SsmParameterValuetestimageSsmNameC96584B6F00A464EAD1953AFF4B05118Parameter",
-          },
-          "KeyName": {
-            "Fn::GetAtt": [
-              "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
-              "KeyPairName",
-            ],
-          },
-          "MetadataOptions": {
-            "HttpPutResponseHopLimit": 2,
-            "HttpTokens": "required",
-          },
-          "SecurityGroupIds": [
-            "test-securityGroupId",
-          ],
-          "TagSpecifications": [
-            {
-              "ResourceType": "instance",
-              "Tags": [
-                {
-                  "Key": "Name",
-                  "Value": "Test/CiStorage/LaunchTemplate",
-                },
-              ],
-            },
-            {
-              "ResourceType": "volume",
-              "Tags": [
-                {
-                  "Key": "Name",
-                  "Value": "Test/CiStorage/LaunchTemplate",
-                },
-              ],
-            },
-          ],
-          "UserData": {
-            "Fn::Base64": {
-              "Fn::Join": [
-                "",
-                [
-                  "#cloud-config
-timezone: America/Los_Angeles
-apt_sources:
-  - source: deb https://cli.github.com/packages stable main
-    keyid: 23F3D4EA75716059
-    filename: github-cli.list
-  - source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
-    keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
-    filename: docker.list
-packages:
-  - awscli
-  - gh
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - docker-compose-plugin
-  - git
-  - gosu
-  - mc
-  - curl
-  - apt-transport-https
-  - ca-certificates
-  - tzdata
-write_files:
-  - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
-    content: |
-      net.ipv4.conf.all.forwarding=1
-  - path: /etc/sysctl.d/lower-fs-inodes-eviction-from-cache.conf
-    content: |
-      vm.vfs_cache_pressure=0
-      vm.swappiness=10
-  - path: /var/lib/cloud/scripts/per-once/define-tz-env.sh
-    permissions: "0755"
-    content: |
-      #!/bin/bash
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
-
-      echo 'TZ="America/Los_Angeles"' >> /etc/environment
-  - path: /var/lib/cloud/scripts/per-once/increase-docker-shutdown-timeout.sh
-    permissions: "0755"
-    content: |
-      #!/bin/bash
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
-
-      sed -i -E '/TimeoutStartSec=.*/a TimeoutStopSec=3600' /usr/lib/systemd/system/docker.service
-      systemctl daemon-reload
-  - path: /var/lib/cloud/scripts/per-once/switch-ssm-user-to-ubuntu-on-login.sh
-    permissions: "0755"
-    content: |
-      #!/bin/bash
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
-
-      echo '[ "$0$@" = "sh" ] && ENV= sudo -u ubuntu -i' > /etc/profile.ssm-user
-      mkdir -p /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/
-      (
-        echo '[Service]'
-        echo 'Environment="ENV=/etc/profile.ssm-user"'
-      ) > /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/sh-env.conf
-      systemctl daemon-reload
-      systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service || true
-  - path: /var/lib/cloud/scripts/per-boot/run-docker-compose-on-boot.sh
-    permissions: "0755"
-    content: |
-      #!/bin/bash
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
-
-      echo "*/1 * * * * ubuntu /home/ubuntu/run-docker-compose.sh 2>&1 | logger -t run-docker-compose" > /etc/cron.d/run-docker-compose
-      exec /home/ubuntu/run-docker-compose.sh
-  - path: /home/ubuntu/run-docker-compose.sh
-    owner: ubuntu:ubuntu
-    permissions: "0755"
-    defer: true
-    content: |
-      #!/bin/bash
-
-      # Switch to non-privileged user if running as root.
-      if [[ $(whoami) != "ubuntu" ]]; then
-        exec gosu ubuntu:ubuntu "$BASH_SOURCE"
-      fi
-
-      # Ensure there is only one instance of this script running.
-      exec {FD}<$BASH_SOURCE
-      flock -n "$FD" || { echo "Already running."; exit 0; }
-      set -e -o pipefail && echo --- && echo "Running $BASH_SOURCE as $(whoami)" && set -o xtrace
-
-      # Load private and public keys from Secrets Manager to ~/.ssh.
-      export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
-      mkdir -p ~/.ssh && chmod 700 ~/.ssh
-      aws secretsmanager get-secret-value \\
-        --secret-id "ec2-ssh-key/",
-                  {
-                    "Fn::GetAtt": [
-                      "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
-                      "KeyPairName",
-                    ],
-                  },
-                  "/private" \\
-        --query SecretString --output text \\
-        > ~/.ssh/ci-storage
-      chmod 600 ~/.ssh/ci-storage
-      ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
-
-      # Load GitHub PAT from Secrets Manager and login to GitHub.
-      aws secretsmanager get-secret-value \\
-        --secret-id "ci-storage/gh-token" \\
-        --query SecretString --output text \\
-        | gh auth login --with-token
-      gh auth setup-git
-
-      # Pull the repository.
-      mkdir -p ~/git && cd ~/git
-      if [[ ! -d .git ]]; then
-        git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
-        if [[ "docker" != "." ]]; then
-          git sparse-checkout set --no-cone "docker"
-        fi
-        git checkout
-      else
-        git pull --rebase
-      fi
-
-      # Run docker compose.
-      sudo usermod -aG docker ubuntu
-      export GH_TOKEN
-      set +o xtrace
-      GH_TOKEN=$(gh auth token)
-      set -o xtrace
-      exec sg docker -c 'cd "docker" && docker compose pull && exec docker compose up --build -d'
-  - path: /home/ubuntu/.bash_profile
-    owner: ubuntu:ubuntu
-    permissions: "0644"
-    defer: true
-    content: |
-      #!/bin/bash
-      if [ -d ~/git/"docker" ]; then
-        cd ~/git/"docker"
-        echo '$ docker compose ps'
-        docker --log-level=ERROR compose ps --format="table {{.Service}}\\t{{.Status}}\\t{{.Ports}}"
-        echo
-      fi
-",
-                ],
-              ],
-            },
-          },
-        },
-        "LaunchTemplateName": "test-cistorage",
-        "TagSpecifications": [
-          {
-            "ResourceType": "launch-template",
-            "Tags": [
-              {
-                "Key": "Name",
-                "Value": "Test/CiStorage/LaunchTemplate",
-              },
-            ],
-          },
-        ],
-      },
-      "Type": "AWS::EC2::LaunchTemplate",
-    },
-    "CiStorageLaunchTemplateProfile1CF26B91": {
-      "Properties": {
-        "Roles": [
-          {
-            "Ref": "CiStorageRunnerRole9B60440E",
-          },
-        ],
-      },
-      "Type": "AWS::IAM::InstanceProfile",
-    },
-    "CiStorageRunnerRole9B60440E": {
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Statement": [
-            {
-              "Action": "sts:AssumeRole",
-              "Effect": "Allow",
-              "Principal": {
-                "Service": "ec2.amazonaws.com",
-              },
-            },
-          ],
-          "Version": "2012-10-17",
-        },
-        "ManagedPolicyArns": [
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/service-role/AmazonEC2RoleforSSM",
-              ],
-            ],
-          },
-          {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition",
-                },
-                ":iam::aws:policy/CloudWatchAgentServerPolicy",
-              ],
-            ],
-          },
-        ],
-        "Policies": [
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": "secretsmanager:GetSecretValue",
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::Join": [
-                      "",
-                      [
-                        "arn:",
-                        {
-                          "Ref": "AWS::Partition",
-                        },
-                        ":secretsmanager:",
-                        {
-                          "Ref": "AWS::Region",
-                        },
-                        ":",
-                        {
-                          "Ref": "AWS::AccountId",
-                        },
-                        ":secret:ec2-ssh-key/",
-                        {
-                          "Fn::GetAtt": [
-                            "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E",
-                            "KeyPairName",
-                          ],
-                        },
-                        "/private*",
-                      ],
-                    ],
-                  },
-                },
-              ],
-              "Version": "2012-10-17",
-            },
-            "PolicyName": "CiStorageKeyPairPolicy",
-          },
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
-                  "Action": "secretsmanager:GetSecretValue",
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::Join": [
-                      "",
-                      [
-                        "arn:",
-                        {
-                          "Ref": "AWS::Partition",
-                        },
-                        ":secretsmanager:",
-                        {
-                          "Ref": "AWS::Region",
-                        },
-                        ":",
-                        {
-                          "Ref": "AWS::AccountId",
-                        },
-                        ":secret:ci-storage/gh-token*",
-                      ],
-                    ],
-                  },
-                },
-              ],
-              "Version": "2012-10-17",
-            },
-            "PolicyName": "CiStorageGhTokenPolicy",
-          },
-        ],
-        "RoleName": "TestCiStorageRunnerRole",
-      },
-      "Type": "AWS::IAM::Role",
-    },
-    "CiStorageSshIdRsaEC2KeyPairtestcistoragesshidrsa26A4353E": {
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "Description": "Used to access ci-storage host from self-hosted runner nodes.",
-        "ExposePublicKey": false,
-        "KmsPrivate": "alias/aws/secretsmanager",
-        "KmsPublic": "alias/aws/secretsmanager",
-        "Name": "test-cistorage-sshidrsa",
-        "PublicKey": "",
-        "PublicKeyFormat": "OPENSSH",
-        "RemoveKeySecretsAfterDays": 0,
-        "SecretPrefix": "ec2-ssh-key/",
-        "ServiceToken": {
-          "Fn::GetAtt": [
-            "EC2KeyNameManagerLambdaBE629145",
-            "Arn",
-          ],
-        },
-        "StackName": "Test",
-        "StorePublicKey": false,
-        "Tags": {
-          "CreatedByCfnCustomResource": "CFN::Resource::Custom::EC2-Key-Pair",
-        },
-      },
-      "Type": "Custom::EC2-Key-Pair",
-      "UpdateReplacePolicy": "Delete",
     },
     "EC2KeyNameManagerLambdaBE629145": {
       "DependsOn": [
@@ -1093,7 +1529,7 @@ write_files:
           "S3Key": "6df647194cd2bd5032d6a0553b301f3350abb6035c13b5ba2a73503a45e7fd80.zip",
         },
         "Description": "Custom CFN resource: Manage EC2 Key Pairs",
-        "FunctionName": "Test-CFN-Resource-Custom-EC2-Key-Pair",
+        "FunctionName": "Stk-CFN-Resource-Custom-EC2-Key-Pair",
         "Handler": "index.handler",
         "Role": {
           "Fn::GetAtt": [
@@ -1258,7 +1694,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc",
+            "Value": "Stk/Vpc",
           },
         ],
       },
@@ -1269,7 +1705,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc",
+            "Value": "Stk/Vpc",
           },
         ],
       },
@@ -1303,7 +1739,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PrivateSubnet1",
+            "Value": "Stk/Vpc/PrivateSubnet1",
           },
         ],
         "VpcId": {
@@ -1335,7 +1771,7 @@ write_files:
           },
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PrivateSubnet1",
+            "Value": "Stk/Vpc/PrivateSubnet1",
           },
         ],
         "VpcId": {
@@ -1361,7 +1797,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PrivateSubnet2",
+            "Value": "Stk/Vpc/PrivateSubnet2",
           },
         ],
         "VpcId": {
@@ -1404,7 +1840,7 @@ write_files:
           },
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PrivateSubnet2",
+            "Value": "Stk/Vpc/PrivateSubnet2",
           },
         ],
         "VpcId": {
@@ -1434,7 +1870,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PublicSubnet1",
+            "Value": "Stk/Vpc/PublicSubnet1",
           },
         ],
       },
@@ -1458,7 +1894,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PublicSubnet1",
+            "Value": "Stk/Vpc/PublicSubnet1",
           },
         ],
       },
@@ -1469,7 +1905,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PublicSubnet1",
+            "Value": "Stk/Vpc/PublicSubnet1",
           },
         ],
         "VpcId": {
@@ -1512,7 +1948,7 @@ write_files:
           },
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PublicSubnet1",
+            "Value": "Stk/Vpc/PublicSubnet1",
           },
         ],
         "VpcId": {
@@ -1542,7 +1978,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PublicSubnet2",
+            "Value": "Stk/Vpc/PublicSubnet2",
           },
         ],
       },
@@ -1566,7 +2002,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PublicSubnet2",
+            "Value": "Stk/Vpc/PublicSubnet2",
           },
         ],
       },
@@ -1577,7 +2013,7 @@ write_files:
         "Tags": [
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PublicSubnet2",
+            "Value": "Stk/Vpc/PublicSubnet2",
           },
         ],
         "VpcId": {
@@ -1620,7 +2056,7 @@ write_files:
           },
           {
             "Key": "Name",
-            "Value": "Test/Vpc/PublicSubnet2",
+            "Value": "Stk/Vpc/PublicSubnet2",
           },
         ],
         "VpcId": {

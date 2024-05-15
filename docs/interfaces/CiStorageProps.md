@@ -17,7 +17,7 @@ VPC to use by this construct.
 
 #### Defined in
 
-[src/CiStorage.ts:56](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L56)
+[src/CiStorage.ts:57](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L57)
 
 ___
 
@@ -30,19 +30,20 @@ instances.
 
 #### Defined in
 
-[src/CiStorage.ts:59](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L59)
+[src/CiStorage.ts:60](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L60)
 
 ___
 
-### securityGroupId
+### instanceNamePrefix
 
-• **securityGroupId**: `string`
+• **instanceNamePrefix**: `string`
 
-Id of the Security Group to set for the created instances.
+All instance names (and hostname for the host instances) will be prefixed
+with that value, separated by "-".
 
 #### Defined in
 
-[src/CiStorage.ts:61](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L61)
+[src/CiStorage.ts:63](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L63)
 
 ___
 
@@ -61,7 +62,7 @@ A Hosted Zone to register the host instances in.
 
 #### Defined in
 
-[src/CiStorage.ts:63](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L63)
+[src/CiStorage.ts:65](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L65)
 
 ___
 
@@ -74,7 +75,7 @@ must pre-exist.
 
 #### Defined in
 
-[src/CiStorage.ts:71](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L71)
+[src/CiStorage.ts:73](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L73)
 
 ___
 
@@ -86,7 +87,7 @@ Time zone for instances, example: America/Los_Angeles.
 
 #### Defined in
 
-[src/CiStorage.ts:73](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L73)
+[src/CiStorage.ts:75](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L75)
 
 ___
 
@@ -104,19 +105,22 @@ Configuration for self-hosted runner instances in the pool.
 | `ghDockerComposeDirectoryUrl` | `string` | URL of docker-compose.yml (or compose.yml) directory. The tool will sparse-checkout that directory. The format is Dockerfile-compatible: https://github.com/owner/repo[#[branch]:/directory/with/compose/] |
 | `imageSsmName` | `string` | SSM parameter name which holds the reference to an instance image. |
 | `volumeGb` | `number` | Size of the root volume. |
+| `swapSizeGb?` | `number` | Size of swap file (if you need it). |
+| `tmpfsMaxSizeGb?` | `number` | If set, mounts /var/lib/docker to tmpfs with the provided max size. |
 | `instanceRequirements` | [`InstanceRequirementsProperty`, ...InstanceRequirementsProperty[]] | The list of requirements to choose Spot Instances. |
-| `scale` | \{ `onDemandPercentageAboveBaseCapacity`: `number` ; `maxActiveRunnersPercent`: \{ `periodSec`: `number` ; `value`: `number`  } ; `minCapacity`: \{ `id`: `string` ; `value`: `number` ; `cron`: \{ `timeZone?`: `string`  } & `CronOptions`  }[] ; `maxCapacity`: `number` ; `maxInstanceLifetime`: `Duration`  } | Scaling options. |
+| `scale` | \{ `onDemandPercentageAboveBaseCapacity`: `number` ; `maxActiveRunnersPercent`: \{ `periodSec`: `number` ; `value`: `number` ; `scalingSteps?`: `number`  } ; `minCapacity`: \{ `id`: `string` ; `value`: `number` ; `cron`: \{ `timeZone?`: `string`  } & `CronOptions`  }[] ; `maxCapacity`: `number` ; `maxInstanceLifetime`: `Duration`  } | Scaling options. |
 | `scale.onDemandPercentageAboveBaseCapacity` | `number` | The percentages of On-Demand Instances and Spot Instances for your additional capacity. |
-| `scale.maxActiveRunnersPercent` | \{ `periodSec`: `number` ; `value`: `number`  } | Maximum percentage of active runners. If the MAX metric of number of active runners within the recent periodSec interval grows beyond this threshold, the autoscaling group will launch new instances until the percentage drops, or maxCapacity is reached. |
+| `scale.maxActiveRunnersPercent` | \{ `periodSec`: `number` ; `value`: `number` ; `scalingSteps?`: `number`  } | Maximum percentage of active runners. If the MAX metric of number of active runners within the recent periodSec interval grows beyond this threshold, the autoscaling group will launch new instances until the percentage drops, or maxCapacity is reached. |
 | `scale.maxActiveRunnersPercent.periodSec` | `number` | Calculate MAX metric within that period. The higher is the value, the slower will the capacity lower (but it doesn't affect how fast will it increase). |
 | `scale.maxActiveRunnersPercent.value` | `number` | Value to use for the target percentage of active (busy) runners. |
+| `scale.maxActiveRunnersPercent.scalingSteps?` | `number` | Desired number of ScalingInterval items in scalingSteps. |
 | `scale.minCapacity` | \{ `id`: `string` ; `value`: `number` ; `cron`: \{ `timeZone?`: `string`  } & `CronOptions`  }[] | Minimal number of idle runners to keep, depending on the daytime. If the auto scaling group has less than this number of instances, the new instances will be created. |
 | `scale.maxCapacity` | `number` | Maximum total number of instances. |
 | `scale.maxInstanceLifetime` | `Duration` | Re-create instances time to time. |
 
 #### Defined in
 
-[src/CiStorage.ts:75](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L75)
+[src/CiStorage.ts:77](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L77)
 
 ___
 
@@ -133,13 +137,14 @@ runner has its localhost ports redirected to that instance.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `ghDockerComposeDirectoryUrl` | `string` | URL of docker-compose.yml (or compose.yml) directory. The tool will sparse-checkout that directory. The format is Dockerfile-compatible: https://github.com/owner/repo[#[branch]:/directory/with/compose/] |
+| `dockerComposeProfiles?` | `string`[] | List of profiles from docker-compose to additionally start. |
 | `imageSsmName` | `string` | SSM parameter name which holds the reference to an instance image. |
-| `volumeIops` | `number` | IOPS of the docker volume. |
-| `volumeThroughput` | `number` | Throughput of the docker volume in MiB/s. |
-| `volumeGb` | `number` | Size of the docker volume. |
+| `swapSizeGb?` | `number` | Size of swap file (if you need it). |
+| `tmpfsMaxSizeGb?` | `number` | If set, mounts /var/lib/docker to tmpfs with the provided max size and copies it from the old instance when the instance gets replaced. |
 | `instanceType` | `string` | Full name of the Instance type. |
 | `machines` | `number` | Number of instances to create. |
+| `ports` | \{ `port`: `Port` ; `description`: `string`  }[] | Ports to be open in the security group for connection from all runners to the host. |
 
 #### Defined in
 
-[src/CiStorage.ts:130](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L130)
+[src/CiStorage.ts:138](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L138)

@@ -4,6 +4,7 @@ import type {
   CronOptions,
 } from "aws-cdk-lib/aws-autoscaling";
 import {
+  AdjustmentType,
   AutoScalingGroup,
   GroupMetrics,
   OnDemandAllocationStrategy,
@@ -12,7 +13,7 @@ import {
   UpdatePolicy,
 } from "aws-cdk-lib/aws-autoscaling";
 import { Metric } from "aws-cdk-lib/aws-cloudwatch";
-import type { IKeyPair, ISecurityGroup, IVpc } from "aws-cdk-lib/aws-ec2";
+import type { IKeyPair, IVpc, CfnInstance } from "aws-cdk-lib/aws-ec2";
 import {
   MachineImage,
   OperatingSystemType,
@@ -24,12 +25,11 @@ import {
   Instance,
   InstanceType,
   SecurityGroup,
-  CfnVolume,
+  Port,
 } from "aws-cdk-lib/aws-ec2";
 import type { RoleProps } from "aws-cdk-lib/aws-iam";
 import {
   ManagedPolicy,
-  Policy,
   PolicyDocument,
   PolicyStatement,
   Role,
@@ -41,6 +41,7 @@ import { KeyPair } from "cdk-ec2-key-pair";
 import { Construct } from "constructs";
 import padStart from "lodash/padStart";
 import range from "lodash/range";
+import { buildPercentScalingSteps } from "./internal/buildPercentScalingSteps";
 import { cloudConfigBuild } from "./internal/cloudConfigBuild";
 import { cloudConfigYamlDump } from "./internal/cloudConfigYamlDump";
 import { namer } from "./internal/namer";
@@ -57,8 +58,9 @@ export interface CiStorageProps {
   /** Instance Profile Role inline policies to be used for all created
    * instances. */
   inlinePolicies: RoleProps["inlinePolicies"];
-  /** Id of the Security Group to set for the created instances. */
-  securityGroupId: string;
+  /** All instance names (and hostname for the host instances) will be prefixed
+   * with that value, separated by "-". */
+  instanceNamePrefix: string;
   /** A Hosted Zone to register the host instances in. */
   hostedZone?: {
     /** Id of the Zone. */
@@ -83,6 +85,10 @@ export interface CiStorageProps {
     imageSsmName: string;
     /** Size of the root volume. */
     volumeGb: number;
+    /** Size of swap file (if you need it). */
+    swapSizeGb?: number;
+    /** If set, mounts /var/lib/docker to tmpfs with the provided max size. */
+    tmpfsMaxSizeGb?: number;
     /** The list of requirements to choose Spot Instances. */
     instanceRequirements: [
       CfnAutoScalingGroup.InstanceRequirementsProperty,
@@ -104,6 +110,8 @@ export interface CiStorageProps {
         periodSec: number;
         /** Value to use for the target percentage of active (busy) runners. */
         value: number;
+        /** Desired number of ScalingInterval items in scalingSteps.  */
+        scalingSteps?: number;
       };
       /** Minimal number of idle runners to keep, depending on the daytime. If
        * the auto scaling group has less than this number of instances, the new
@@ -132,18 +140,22 @@ export interface CiStorageProps {
      * sparse-checkout that directory. The format is Dockerfile-compatible:
      * https://github.com/owner/repo[#[branch]:/directory/with/compose/] */
     ghDockerComposeDirectoryUrl: string;
+    /** List of profiles from docker-compose to additionally start. */
+    dockerComposeProfiles?: string[];
     /** SSM parameter name which holds the reference to an instance image. */
     imageSsmName: string;
-    /** IOPS of the docker volume. */
-    volumeIops: number;
-    /** Throughput of the docker volume in MiB/s. */
-    volumeThroughput: number;
-    /** Size of the docker volume. */
-    volumeGb: number;
+    /** Size of swap file (if you need it). */
+    swapSizeGb?: number;
+    /** If set, mounts /var/lib/docker to tmpfs with the provided max size and
+     * copies it from the old instance when the instance gets replaced. */
+    tmpfsMaxSizeGb?: number;
     /** Full name of the Instance type. */
     instanceType: string;
     /** Number of instances to create. */
     machines: number;
+    /** Ports to be open in the security group for connection from all runners
+     * to the host. */
+    ports: Array<{ port: Port; description: string }>;
   };
 }
 
@@ -171,24 +183,25 @@ export interface CiStorageProps {
  */
 export class CiStorage extends Construct {
   public readonly vpc: IVpc;
-  public readonly securityGroup: ISecurityGroup;
+  public readonly securityGroup: SecurityGroup;
   public readonly keyPair: IKeyPair;
   public readonly keyPairPrivateKeySecretName: string;
   public readonly roles: { runner: Role; host: Role };
   public readonly launchTemplate: LaunchTemplate;
   public readonly autoScalingGroup: AutoScalingGroup;
   public readonly hostedZone?: IHostedZone;
-  public readonly hostInstances: Instance[] = [];
-  public readonly hostVolumes: CfnVolume[] = [];
+  public readonly hosts: Array<{
+    fqdn: string | undefined;
+    instance: Instance;
+  }> = [];
 
   constructor(
     public readonly scope: Construct,
     public readonly key: string,
     public readonly props: CiStorageProps,
   ) {
-    super(scope, key);
-
-    const keyNamer = namer(key as any);
+    super(scope, namer(key as any).pascal);
+    const instanceNamePrefix = namer(props.instanceNamePrefix as any);
 
     this.vpc = props.vpc;
 
@@ -224,33 +237,52 @@ export class CiStorage extends Construct {
             ],
             inlinePolicies: {
               ...props.inlinePolicies,
-              [namer(keyNamer, "key", "pair", "policy").pascal]:
+              [namer("key", "pair", "policy").pascal]: new PolicyDocument({
+                statements: [
+                  new PolicyStatement({
+                    actions: ["secretsmanager:GetSecretValue"],
+                    resources: [
+                      Stack.of(this).formatArn({
+                        service: "secretsmanager",
+                        resource: "secret",
+                        resourceName: `${this.keyPairPrivateKeySecretName}*`,
+                        arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              [namer("gh", "token", "policy").pascal]: new PolicyDocument({
+                statements: [
+                  new PolicyStatement({
+                    actions: ["secretsmanager:GetSecretValue"],
+                    resources: [
+                      Stack.of(this).formatArn({
+                        service: "secretsmanager",
+                        resource: "secret",
+                        resourceName: `${props.ghTokenSecretName}*`,
+                        arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              [namer("signal", "resource", "policy").pascal]:
                 new PolicyDocument({
                   statements: [
                     new PolicyStatement({
-                      actions: ["secretsmanager:GetSecretValue"],
-                      resources: [
-                        Stack.of(this).formatArn({
-                          service: "secretsmanager",
-                          resource: "secret",
-                          resourceName: `${this.keyPairPrivateKeySecretName}*`,
-                          arnFormat: ArnFormat.COLON_RESOURCE_NAME,
-                        }),
-                      ],
+                      actions: ["ec2:DescribeInstances"],
+                      resources: ["*"],
+                      // Describe* don't support resource-level permissions.
                     }),
-                  ],
-                }),
-              [namer(keyNamer, "gh", "token", "policy").pascal]:
-                new PolicyDocument({
-                  statements: [
                     new PolicyStatement({
-                      actions: ["secretsmanager:GetSecretValue"],
+                      actions: ["cloudformation:SignalResource"],
                       resources: [
                         Stack.of(this).formatArn({
-                          service: "secretsmanager",
-                          resource: "secret",
-                          resourceName: `${props.ghTokenSecretName}*`,
-                          arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+                          service: "cloudformation",
+                          resource: "stack",
+                          resourceName: `${Stack.of(this).stackName}/*`,
+                          arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
                         }),
                       ],
                     }),
@@ -264,30 +296,158 @@ export class CiStorage extends Construct {
 
     {
       const id = namer("sg");
-      this.securityGroup = SecurityGroup.fromSecurityGroupId(
-        this,
-        id.pascal,
-        props.securityGroupId,
+      this.securityGroup = new SecurityGroup(this, id.pascal, {
+        securityGroupName: id.pathKebabFrom(this),
+        description: id.pathKebabFrom(this),
+        vpc: this.vpc,
+      });
+      Tags.of(this.securityGroup).add("Name", id.pathKebabFrom(this));
+      for (const { port, description } of [
+        { port: Port.tcp(22), description: "SSH" }, // to copy RAM drive from host to host
+        ...props.host.ports,
+      ]) {
+        this.securityGroup.addIngressRule(
+          this.securityGroup,
+          port,
+          `from runners and host to ${description}`,
+        );
+      }
+    }
+
+    {
+      const id = namer("zone");
+      if (props.hostedZone) {
+        this.hostedZone = HostedZone.fromHostedZoneAttributes(
+          this,
+          id.pascal,
+          props.hostedZone,
+        );
+      }
+    }
+
+    {
+      const machineImage = MachineImage.fromSsmParameter(
+        props.host.imageSsmName,
+        { os: OperatingSystemType.LINUX },
       );
+      for (const i in range(props.host.machines)) {
+        const id = namer(
+          instanceNamePrefix,
+          "host",
+          padStart(i + 1, 3, "0").toString() as Lowercase<string>,
+        );
+        const recordName = id.kebab;
+        const fqdn = this.hostedZone
+          ? recordName + "." + this.hostedZone.zoneName.replace(/\.$/, "")
+          : undefined;
+
+        const userData = UserData.custom(
+          cloudConfigYamlDump(
+            cloudConfigBuild({
+              fqdn,
+              ghTokenSecretName: props.ghTokenSecretName,
+              ghDockerComposeDirectoryUrl:
+                props.host.ghDockerComposeDirectoryUrl,
+              dockerComposeEnv: {},
+              dockerComposeProfiles: props.host.dockerComposeProfiles ?? [],
+              keyPairPrivateKeySecretName: this.keyPairPrivateKeySecretName,
+              timeZone: props.timeZone,
+              tmpfs: props.host.tmpfsMaxSizeGb
+                ? {
+                    path: "/var/lib/docker",
+                    maxSizeGb: props.host.tmpfsMaxSizeGb,
+                  }
+                : undefined,
+              swapSizeGb: props.host.swapSizeGb,
+            }),
+          ),
+        );
+
+        const instance = new Instance(
+          this,
+          // As opposed to all other places, here we MUST prepend the instance
+          // construct id with the FULL scope (typically owning stack name) due
+          // to this bug: https://github.com/aws/aws-cdk/issues/22695 - the full
+          // instance id must be globally unique across all stacks, otherwise
+          // CDK fails to create automatic launch templates for them.
+          //
+          // With the current code, the auto-created launch template name is:
+          // - ..........Stk + Cnstrct + MyCiHost001 + Instance + LaunchTemplate
+          //
+          // But the instance id itself is ugly:
+          // - Cnstrct + Stk + Cnstrct + MyCiHost001 + Instance
+          namer(id, "instance").pathPascalFrom(this),
+          {
+            vpc: this.vpc,
+            securityGroup: this.securityGroup,
+            availabilityZone: this.vpc.availabilityZones[0],
+            instanceType: new InstanceType(props.host.instanceType),
+            machineImage,
+            role: this.roles.host,
+            keyPair: this.keyPair,
+            userData,
+            blockDevices: [
+              {
+                deviceName: "/dev/sda1",
+                volume: BlockDeviceVolume.ebs(20, {
+                  encrypted: true,
+                  volumeType: EbsDeviceVolumeType.GP2,
+                  deleteOnTermination: true,
+                }),
+              },
+            ],
+            userDataCausesReplacement: true,
+            requireImdsv2: true,
+            detailedMonitoring: true,
+          },
+        );
+        (instance.node.defaultChild as CfnInstance).cfnOptions.creationPolicy =
+          { resourceSignal: { count: 1, timeout: "PT15M" } };
+        Tags.of(instance.instance).add("Name", fqdn ?? recordName);
+        this.hosts.push({ fqdn, instance });
+
+        if (this.hostedZone) {
+          new ARecord(this, namer(id, namer("a")).pascal, {
+            zone: this.hostedZone,
+            recordName,
+            target: RecordTarget.fromIpAddresses(instance.instancePrivateIp),
+            ttl: Duration.minutes(1),
+          });
+        }
+      }
     }
 
     {
       const userData = UserData.custom(
         cloudConfigYamlDump(
           cloudConfigBuild({
-            fqdn: "",
+            fqdn: undefined, // no way to assign an unique hostname via LaunchTemplate
             ghTokenSecretName: props.ghTokenSecretName,
             ghDockerComposeDirectoryUrl:
               props.runner.ghDockerComposeDirectoryUrl,
+            dockerComposeEnv: {
+              GH_REPOSITORY: props.runner.ghRepository,
+              GH_LABELS: `${instanceNamePrefix.kebab},ci-storage`,
+              // Future idea: each runner should know its host (for load
+              // balancing purposes); for now, we just hardcode the 1st one.
+              FORWARD_HOST: this.hosts[0].fqdn ?? "",
+            },
+            dockerComposeProfiles: [],
             keyPairPrivateKeySecretName: this.keyPairPrivateKeySecretName,
             timeZone: props.timeZone,
-            mount: undefined,
+            tmpfs: props.runner.tmpfsMaxSizeGb
+              ? {
+                  path: "/var/lib/docker",
+                  maxSizeGb: props.runner.tmpfsMaxSizeGb,
+                }
+              : undefined,
+            swapSizeGb: props.runner.swapSizeGb,
           }),
         ),
       );
-      const id = namer("launch", "template");
+      const id = namer("lt");
       this.launchTemplate = new LaunchTemplate(this, id.pascal, {
-        launchTemplateName: keyNamer.pathKebabFrom(scope),
+        launchTemplateName: id.pathKebabFrom(this),
         machineImage: MachineImage.fromSsmParameter(props.runner.imageSsmName, {
           os: OperatingSystemType.LINUX,
         }),
@@ -307,14 +467,15 @@ export class CiStorage extends Construct {
         securityGroup: this.securityGroup,
         requireImdsv2: true,
         httpPutResponseHopLimit: 2,
+        detailedMonitoring: true,
       });
       this.launchTemplate.node.addDependency(this.keyPair);
     }
 
     {
-      const id = namer("auto", "scaling", "group");
+      const id = namer("asg", "runner");
       this.autoScalingGroup = new AutoScalingGroup(this, id.pascal, {
-        autoScalingGroupName: keyNamer.pathKebabFrom(scope),
+        autoScalingGroupName: id.pathKebabFrom(this),
         vpc: this.vpc,
         maxCapacity: props.runner.scale.maxCapacity,
         maxInstanceLifetime: props.runner.scale.maxInstanceLifetime,
@@ -340,174 +501,35 @@ export class CiStorage extends Construct {
       });
       Tags.of(this.autoScalingGroup).add(
         "Name",
-        namer(keyNamer, "runner").kebab,
+        namer(instanceNamePrefix, "runner").kebab,
       );
-      this.autoScalingGroup.scaleToTrackMetric("ActiveRunnersPercent", {
-        metric: new Metric({
-          namespace: "ci-storage/metrics",
-          metricName: "ActiveRunnersPercent",
-          dimensionsMap: { GH_REPOSITORY: props.runner.ghRepository },
-          period: Duration.seconds(
-            props.runner.scale.maxActiveRunnersPercent.periodSec,
-          ),
-          statistic: "max",
-        }),
-        targetValue: props.runner.scale.maxActiveRunnersPercent.value,
+
+      const metric = new Metric({
+        namespace: "ci-storage/metrics",
+        metricName: "ActiveRunnersPercent",
+        dimensionsMap: { GH_REPOSITORY: props.runner.ghRepository },
+        period: Duration.seconds(
+          props.runner.scale.maxActiveRunnersPercent.periodSec,
+        ),
+        statistic: "max",
+      });
+      const scalingSteps = buildPercentScalingSteps(
+        props.runner.scale.maxActiveRunnersPercent.value,
+        props.runner.scale.maxActiveRunnersPercent.scalingSteps ?? 6,
+      );
+      this.autoScalingGroup.scaleOnMetric("ActiveRunnersPercent", {
+        metric,
+        adjustmentType: AdjustmentType.PERCENT_CHANGE_IN_CAPACITY,
+        scalingSteps,
+        evaluationPeriods: 1,
+        datapointsToAlarm: 1,
       });
       for (const { id, value, cron } of props.runner.scale.minCapacity) {
         this.autoScalingGroup.scaleOnSchedule(id, {
           minCapacity: value,
           timeZone: cron.timeZone ?? props.timeZone,
-          schedule: Schedule.cron(cron),
+          schedule: Schedule.cron({ minute: "0", ...cron }),
         });
-      }
-    }
-
-    {
-      const id = namer("zone");
-      if (props.hostedZone) {
-        this.hostedZone = HostedZone.fromHostedZoneAttributes(
-          this,
-          id.pascal,
-          props.hostedZone,
-        );
-      }
-    }
-
-    {
-      const machineImage = MachineImage.fromSsmParameter(
-        props.host.imageSsmName,
-        { os: OperatingSystemType.LINUX },
-      );
-      for (const i in range(props.host.machines)) {
-        const id = namer(
-          "host",
-          namer(padStart(i + 1, 3, "0").toString() as any),
-        );
-        const recordName = namer(keyNamer, id).kebab;
-        const fqdn = this.hostedZone
-          ? recordName + "." + this.hostedZone.zoneName.replace(/\.$/, "")
-          : "";
-
-        // Unfortunately, there is no way in CDK to auto re-attach the volume to
-        // an instance if that instance gets replaced. This is because
-        // CloudFormation first launches a new instance while keeping the old
-        // instance still running, so the volume can't be attached to the new
-        // instance - it's already attached to the old one. The solution we use
-        // here is to do the volume attachment via cloud-config at the new
-        // instance's initial boot: it first stops the old instance from the new
-        // one ("aws ec2 stop-instances"), then detaches the volume, and then
-        // attaches it to the current instance. See logic in
-        // cloudConfigBuild.ts.
-        const volumeId = namer(id, "volume");
-        const volume = new CfnVolume(this, volumeId.pascal, {
-          availabilityZone: this.vpc.availabilityZones[0],
-          autoEnableIo: true,
-          encrypted: true,
-          iops: props.host.volumeIops,
-          throughput: props.host.volumeThroughput,
-          size: props.host.volumeGb,
-          volumeType: "gp3",
-        });
-        Tags.of(volume).add("Name", volumeId.pathKebabFrom(this));
-        this.hostVolumes.push(volume);
-
-        const userData = UserData.custom(
-          cloudConfigYamlDump(
-            cloudConfigBuild({
-              fqdn,
-              ghTokenSecretName: props.ghTokenSecretName,
-              ghDockerComposeDirectoryUrl:
-                props.host.ghDockerComposeDirectoryUrl,
-              keyPairPrivateKeySecretName: this.keyPairPrivateKeySecretName,
-              timeZone: props.timeZone,
-              mount: { volumeId: volume.attrVolumeId, path: "/mnt" },
-            }),
-          ),
-        );
-
-        const instance = new Instance(
-          this,
-          namer(id, namer("instance")).pascal,
-          {
-            vpc: this.vpc,
-            securityGroup: this.securityGroup,
-            availabilityZone: this.vpc.availabilityZones[0],
-            instanceType: new InstanceType(props.host.instanceType),
-            machineImage,
-            role: this.roles.host,
-            keyPair: this.keyPair,
-            userData,
-            blockDevices: [
-              {
-                deviceName: "/dev/sda1",
-                volume: BlockDeviceVolume.ebs(20, {
-                  encrypted: true,
-                  volumeType: EbsDeviceVolumeType.GP2,
-                  deleteOnTermination: true,
-                }),
-              },
-            ],
-            userDataCausesReplacement: true,
-            requireImdsv2: true,
-          },
-        );
-        Tags.of(instance.instance).add("Name", fqdn);
-        this.hostInstances.push(instance);
-
-        if (this.hostedZone) {
-          new ARecord(this, namer(id, namer("a")).pascal, {
-            zone: this.hostedZone,
-            recordName,
-            target: RecordTarget.fromIpAddresses(instance.instancePrivateIp),
-            ttl: Duration.minutes(1),
-          });
-        }
-      }
-
-      {
-        const id = namer("host", "volume", "policy");
-        const conditions = {
-          StringEquals: {
-            ["ec2:ResourceTag/aws:cloudformation:stack-name"]:
-              Stack.of(this).stackName,
-          },
-        };
-        this.roles.host.attachInlinePolicy(
-          new Policy(this, id.pascal, {
-            policyName: namer(keyNamer, id).pascal,
-            statements: [
-              new PolicyStatement({
-                actions: ["ec2:DescribeVolumes", "ec2:DescribeInstances"],
-                resources: ["*"],
-                // Describe* don't support resource-level permissions and
-                // conditions.
-              }),
-              new PolicyStatement({
-                actions: [
-                  "ec2:StopInstances",
-                  "ec2:DetachVolume",
-                  "ec2:AttachVolume",
-                ],
-                conditions, // filter by conditions, not by resource ARNs
-                resources: [
-                  Stack.of(this).formatArn({
-                    service: "ec2",
-                    resource: "instance",
-                    resourceName: "*",
-                    arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
-                  }),
-                  Stack.of(this).formatArn({
-                    service: "ec2",
-                    resource: "volume",
-                    resourceName: "*",
-                    arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
-                  }),
-                ],
-              }),
-            ],
-          }),
-        );
       }
     }
   }

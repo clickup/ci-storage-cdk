@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`buildPercentScalingSteps 1`] = `
+"[ { pctTarget: 70, lower: undefined, upper: 18, change: -74, pctAfter: 69 },
+  { pctTarget: 70, lower: 18, upper: 35, change: -50, pctAfter: 70 },
+  { pctTarget: 70, lower: 35, upper: 53, change: -24, pctAfter: 70 },
+  { pctTarget: 70, lower: 53, upper: 70, change: 0, pctAfter: 70 },
+  { pctTarget: 70, lower: 70, upper: 78, change: 11, pctAfter: 70 },
+  { pctTarget: 70, lower: 78, upper: 85, change: 21, pctAfter: 70 },
+  { pctTarget: 70, lower: 85, upper: 93, change: 33, pctAfter: 70 },
+  { pctTarget: 70, lower: 93, upper: undefined, change: 43, pctAfter: 70 } ]"
+`;
+
+exports[`buildPercentScalingSteps 2`] = `
+"[ { pctTarget: 50, lower: undefined, upper: 13, change: -74, pctAfter: 50 },
+  { pctTarget: 50, lower: 13, upper: 25, change: -50, pctAfter: 50 },
+  { pctTarget: 50, lower: 25, upper: 38, change: -24, pctAfter: 50 },
+  { pctTarget: 50, lower: 38, upper: 50, change: 0, pctAfter: 50 },
+  { pctTarget: 50, lower: 50, upper: 63, change: 26, pctAfter: 50 },
+  { pctTarget: 50, lower: 63, upper: 75, change: 50, pctAfter: 50 },
+  { pctTarget: 50, lower: 75, upper: 88, change: 76, pctAfter: 50 },
+  { pctTarget: 50, lower: 88, upper: undefined, change: 100, pctAfter: 50 } ]"
+`;

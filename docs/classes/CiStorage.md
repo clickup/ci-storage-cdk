@@ -53,7 +53,7 @@ Construct.constructor
 
 #### Defined in
 
-[src/CiStorage.ts:184](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L184)
+[src/CiStorage.ts:198](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L198)
 
 ## Properties
 
@@ -63,17 +63,17 @@ Construct.constructor
 
 #### Defined in
 
-[src/CiStorage.ts:173](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L173)
+[src/CiStorage.ts:185](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L185)
 
 ___
 
 ### securityGroup
 
-• `Readonly` **securityGroup**: `ISecurityGroup`
+• `Readonly` **securityGroup**: `SecurityGroup`
 
 #### Defined in
 
-[src/CiStorage.ts:174](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L174)
+[src/CiStorage.ts:186](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L186)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:175](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L175)
+[src/CiStorage.ts:187](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L187)
 
 ___
 
@@ -93,7 +93,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:176](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L176)
+[src/CiStorage.ts:188](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L188)
 
 ___
 
@@ -110,7 +110,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:177](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L177)
+[src/CiStorage.ts:189](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L189)
 
 ___
 
@@ -120,7 +120,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:178](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L178)
+[src/CiStorage.ts:190](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L190)
 
 ___
 
@@ -130,7 +130,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:179](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L179)
+[src/CiStorage.ts:191](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L191)
 
 ___
 
@@ -140,27 +140,17 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:180](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L180)
+[src/CiStorage.ts:192](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L192)
 
 ___
 
-### hostInstances
+### hosts
 
-• `Readonly` **hostInstances**: `Instance`[] = `[]`
-
-#### Defined in
-
-[src/CiStorage.ts:181](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L181)
-
-___
-
-### hostVolumes
-
-• `Readonly` **hostVolumes**: `CfnVolume`[] = `[]`
+• `Readonly` **hosts**: \{ `fqdn`: `undefined` \| `string` ; `instance`: `Instance`  }[] = `[]`
 
 #### Defined in
 
-[src/CiStorage.ts:182](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L182)
+[src/CiStorage.ts:193](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L193)
 
 ___
 
@@ -170,7 +160,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:185](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L185)
+[src/CiStorage.ts:199](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L199)
 
 ___
 
@@ -180,7 +170,7 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:186](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L186)
+[src/CiStorage.ts:200](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L200)
 
 ___
 
@@ -190,4 +180,4 @@ ___
 
 #### Defined in
 
-[src/CiStorage.ts:187](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L187)
+[src/CiStorage.ts:201](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L201)

@@ -1,6 +1,6 @@
 import { App, Duration, Stack } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
-import { Vpc } from "aws-cdk-lib/aws-ec2";
+import { Port, Vpc } from "aws-cdk-lib/aws-ec2";
 import type { Construct } from "constructs";
 import { CiStorage } from "../CiStorage";
 import { namer } from "../internal/namer";
@@ -20,10 +20,10 @@ class CiStorageStack extends Stack {
     });
 
     this.vpc = new Vpc(this, "Vpc", {});
-    this.ciStorage = new CiStorage(this, "CiStorage", {
+    this.ciStorage = new CiStorage(this, "cnstrct", {
       vpc: this.vpc,
       inlinePolicies: {},
-      securityGroupId: "test-securityGroupId",
+      instanceNamePrefix: "my-ci",
       hostedZone: {
         hostedZoneId: "test-hostedZoneId",
         zoneName: "test-zoneName",
@@ -36,6 +36,8 @@ class CiStorageStack extends Stack {
           "https://github.com/dimikot/ci-storage#:docker",
         imageSsmName: "test-imageSsmName",
         volumeGb: 50,
+        swapSizeGb: 8,
+        tmpfsMaxSizeGb: 4,
         instanceRequirements: [
           {
             memoryMiB: { min: 8192, max: 16384 },
@@ -47,6 +49,7 @@ class CiStorageStack extends Stack {
           maxActiveRunnersPercent: {
             periodSec: 600,
             value: 70,
+            scalingSteps: 10,
           },
           minCapacity: [
             {
@@ -67,12 +70,15 @@ class CiStorageStack extends Stack {
       host: {
         ghDockerComposeDirectoryUrl:
           "https://github.com/dimikot/ci-storage#:docker",
+        dockerComposeProfiles: ["ci"],
         imageSsmName: "test-imageSsmName",
-        volumeIops: 3000,
-        volumeThroughput: 125,
-        volumeGb: 200,
+        tmpfsMaxSizeGb: 4,
         instanceType: "t3.large",
         machines: 1,
+        ports: [
+          { port: Port.tcp(10022), description: "ci-storage container" },
+          { port: Port.tcpRange(42000, 42042), description: "test ports" },
+        ],
       },
     });
   }
@@ -80,6 +86,6 @@ class CiStorageStack extends Stack {
 
 test("CiStorage", () => {
   const app = new App();
-  const stack = new CiStorageStack(app, namer("test"), {});
+  const stack = new CiStorageStack(app, namer("stk"), {});
   expect(Template.fromStack(stack).toJSON()).toMatchSnapshot();
 });
