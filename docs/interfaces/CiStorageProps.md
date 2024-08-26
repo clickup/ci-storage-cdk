@@ -17,7 +17,7 @@ VPC to use by this construct.
 
 #### Defined in
 
-[src/CiStorage.ts:57](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L57)
+[src/CiStorage.ts:62](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L62)
 
 ___
 
@@ -25,12 +25,11 @@ ___
 
 • **inlinePolicies**: `undefined` \| \{ `[name: string]`: `PolicyDocument`;  }
 
-Instance Profile Role inline policies to be used for all created
-instances.
+Instance Profile Role inline policies for all created instances.
 
 #### Defined in
 
-[src/CiStorage.ts:60](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L60)
+[src/CiStorage.ts:64](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L64)
 
 ___
 
@@ -43,7 +42,7 @@ with that value, separated by "-".
 
 #### Defined in
 
-[src/CiStorage.ts:63](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L63)
+[src/CiStorage.ts:67](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L67)
 
 ___
 
@@ -62,7 +61,7 @@ A Hosted Zone to register the host instances in.
 
 #### Defined in
 
-[src/CiStorage.ts:65](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L65)
+[src/CiStorage.ts:69](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L69)
 
 ___
 
@@ -75,7 +74,7 @@ must pre-exist.
 
 #### Defined in
 
-[src/CiStorage.ts:73](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L73)
+[src/CiStorage.ts:77](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L77)
 
 ___
 
@@ -87,40 +86,19 @@ Time zone for instances, example: America/Los_Angeles.
 
 #### Defined in
 
-[src/CiStorage.ts:75](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L75)
+[src/CiStorage.ts:79](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L79)
 
 ___
 
-### runner
+### runners
 
-• **runner**: `Object`
+• **runners**: \{ `label`: `string` ; `ghRepository`: `string` ; `ghDockerComposeDirectoryUrl`: `string` ; `imageSsmName`: `string` ; `volumeRootGb`: `number` ; `volumeRootIops?`: `number` ; `volumeRootThroughput?`: `number` ; `volumeLogsGb`: `number` ; `swapSizeGb?`: `number` ; `instanceRequirements`: [`InstanceRequirementsProperty`, ...InstanceRequirementsProperty[]] ; `onDemandPercentageAboveBaseCapacity`: `number` ; `minCapacity`: \{ `id`: `string` ; `value`: `number` ; `cron`: \{ `timeZone?`: `string`  } & `CronOptions`  }[] ; `maxCapacity`: `number` ; `maxInstanceLifetime`: `Duration`  }[]
 
 Configuration for self-hosted runner instances in the pool.
 
-#### Type declaration
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `ghRepository` | `string` | "{owner}/{repository}" which this self-hosted runners pool serves. |
-| `ghDockerComposeDirectoryUrl` | `string` | URL of docker-compose.yml (or compose.yml) directory. The tool will sparse-checkout that directory. The format is Dockerfile-compatible: https://github.com/owner/repo[#[branch]:/directory/with/compose/] |
-| `imageSsmName` | `string` | SSM parameter name which holds the reference to an instance image. |
-| `volumeGb` | `number` | Size of the root volume. |
-| `swapSizeGb?` | `number` | Size of swap file (if you need it). |
-| `tmpfsMaxSizeGb?` | `number` | If set, mounts /var/lib/docker to tmpfs with the provided max size. |
-| `instanceRequirements` | [`InstanceRequirementsProperty`, ...InstanceRequirementsProperty[]] | The list of requirements to choose Spot Instances. |
-| `scale` | \{ `onDemandPercentageAboveBaseCapacity`: `number` ; `maxActiveRunnersPercent`: \{ `periodSec`: `number` ; `value`: `number` ; `scalingSteps?`: `number`  } ; `minCapacity`: \{ `id`: `string` ; `value`: `number` ; `cron`: \{ `timeZone?`: `string`  } & `CronOptions`  }[] ; `maxCapacity`: `number` ; `maxInstanceLifetime`: `Duration`  } | Scaling options. |
-| `scale.onDemandPercentageAboveBaseCapacity` | `number` | The percentages of On-Demand Instances and Spot Instances for your additional capacity. |
-| `scale.maxActiveRunnersPercent` | \{ `periodSec`: `number` ; `value`: `number` ; `scalingSteps?`: `number`  } | Maximum percentage of active runners. If the MAX metric of number of active runners within the recent periodSec interval grows beyond this threshold, the autoscaling group will launch new instances until the percentage drops, or maxCapacity is reached. |
-| `scale.maxActiveRunnersPercent.periodSec` | `number` | Calculate MAX metric within that period. The higher is the value, the slower will the capacity lower (but it doesn't affect how fast will it increase). |
-| `scale.maxActiveRunnersPercent.value` | `number` | Value to use for the target percentage of active (busy) runners. |
-| `scale.maxActiveRunnersPercent.scalingSteps?` | `number` | Desired number of ScalingInterval items in scalingSteps. |
-| `scale.minCapacity` | \{ `id`: `string` ; `value`: `number` ; `cron`: \{ `timeZone?`: `string`  } & `CronOptions`  }[] | Minimal number of idle runners to keep, depending on the daytime. If the auto scaling group has less than this number of instances, the new instances will be created. |
-| `scale.maxCapacity` | `number` | Maximum total number of instances. |
-| `scale.maxInstanceLifetime` | `Duration` | Re-create instances time to time. |
-
 #### Defined in
 
-[src/CiStorage.ts:77](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L77)
+[src/CiStorage.ts:81](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L81)
 
 ___
 
@@ -128,9 +106,10 @@ ___
 
 • **host**: `Object`
 
-Configuration for ci-storage host instance in the pool. This instance also
-runs common services reusable by self-hosted runners. Each self-hosted
-runner has its localhost ports redirected to that instance.
+Configuration for ci-storage host instance in the pool. This instance runs
+ci-storage container, ci-scaler container and also common database services
+reusable by self-hosted runners. Each self-hosted runner has its localhost
+ports redirected to those instance's services.
 
 #### Type declaration
 
@@ -139,12 +118,11 @@ runner has its localhost ports redirected to that instance.
 | `ghDockerComposeDirectoryUrl` | `string` | URL of docker-compose.yml (or compose.yml) directory. The tool will sparse-checkout that directory. The format is Dockerfile-compatible: https://github.com/owner/repo[#[branch]:/directory/with/compose/] |
 | `dockerComposeProfiles?` | `string`[] | List of profiles from docker-compose to additionally start. |
 | `imageSsmName` | `string` | SSM parameter name which holds the reference to an instance image. |
-| `swapSizeGb?` | `number` | Size of swap file (if you need it). |
-| `tmpfsMaxSizeGb?` | `number` | If set, mounts /var/lib/docker to tmpfs with the provided max size and copies it from the old instance when the instance gets replaced. |
+| `swapSizeGb?` | `number` | Size of swap file (if you need it). The swapfile will be placed to /var/swapfile on the root volume. |
+| `varLibDockerOnTmpfsMaxSizeGb?` | `number` | If set, mounts the entire /var/lib/docker host instance directory to tmpfs with the provided max size, and also copies it from the old instance when the instance gets replaced. |
 | `instanceType` | `string` | Full name of the Instance type. |
-| `machines` | `number` | Number of instances to create. |
-| `ports` | \{ `port`: `Port` ; `description`: `string`  }[] | Ports to be open in the security group for connection from all runners to the host. |
+| `ports` | \{ `port`: `Port` ; `description`: `string` ; `isWebhook?`: ``true``  }[] | Ports to be open in the security group for connection from any CI resources to the host (private IP addresses only). For a port marked as isWebhook=true, the following AWS resources will also be created: HttpApi->NLB->TargetGroup, where HttpApi will have an auto-generated AWS domain with SSL enabled, and the whole chain will proxy all POST requests (presumably, sent by GitHub webhooks) to the given host's port. |
 
 #### Defined in
 
-[src/CiStorage.ts:138](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L138)
+[src/CiStorage.ts:133](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L133)

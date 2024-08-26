@@ -30,53 +30,64 @@ class CiStorageStack extends Stack {
       },
       ghTokenSecretName: "ci-storage/gh-token",
       timeZone: "America/Los_Angeles",
-      runner: {
-        ghRepository: "time-loop/slapdash",
-        ghDockerComposeDirectoryUrl:
-          "https://github.com/dimikot/ci-storage#:docker",
-        imageSsmName: "test-imageSsmName",
-        volumeGb: 50,
-        swapSizeGb: 8,
-        tmpfsMaxSizeGb: 4,
-        instanceRequirements: [
-          {
-            memoryMiB: { min: 8192, max: 16384 },
-            vCpuCount: { min: 4, max: 8 },
-          },
-        ],
-        scale: {
+      runners: [
+        {
+          label: "ci-small",
+          ghRepository: "time-loop/slapdash",
+          ghDockerComposeDirectoryUrl:
+            "https://github.com/dimikot/ci-storage#:docker",
+          imageSsmName: "/test-image/ssm/name",
+          volumeRootGb: 20,
+          volumeLogsGb: 5,
+          swapSizeGb: 4,
+          instanceRequirements: [
+            {
+              memoryMiB: { min: 4096, max: 8192 },
+              vCpuCount: { min: 2, max: 4 },
+            },
+          ],
           onDemandPercentageAboveBaseCapacity: 10,
-          maxActiveRunnersPercent: {
-            periodSec: 600,
-            value: 70,
-            scalingSteps: 10,
-          },
           minCapacity: [
+            { id: "CaWorkDayStarts", value: 10, cron: { hour: "8" } },
+            { id: "CaWorkDayEnds", value: 5, cron: { hour: "18" } },
+          ],
+          maxCapacity: 10,
+          maxInstanceLifetime: Duration.days(1),
+        },
+        {
+          label: "ci-large",
+          ghRepository: "time-loop/slapdash",
+          ghDockerComposeDirectoryUrl:
+            "https://github.com/dimikot/ci-storage#:docker",
+          imageSsmName: "/test-image/ssm/name",
+          volumeRootGb: 40,
+          volumeLogsGb: 5,
+          swapSizeGb: 8,
+          instanceRequirements: [
             {
-              id: "CaWorkDayStarts",
-              value: 10,
-              cron: { hour: "8" },
+              memoryMiB: { min: 8192, max: 16384 },
+              vCpuCount: { min: 4, max: 8 },
             },
-            {
-              id: "CaWorkDayEnds",
-              value: 5,
-              cron: { hour: "18" },
-            },
+          ],
+          onDemandPercentageAboveBaseCapacity: 10,
+          minCapacity: [
+            { id: "CaWorkDayStarts", value: 10, cron: { hour: "8" } },
+            { id: "CaWorkDayEnds", value: 5, cron: { hour: "18" } },
           ],
           maxCapacity: 20,
           maxInstanceLifetime: Duration.days(1),
         },
-      },
+      ],
       host: {
         ghDockerComposeDirectoryUrl:
           "https://github.com/dimikot/ci-storage#:docker",
         dockerComposeProfiles: ["ci"],
-        imageSsmName: "test-imageSsmName",
-        tmpfsMaxSizeGb: 4,
+        imageSsmName: "/test-image/ssm/name",
+        varLibDockerOnTmpfsMaxSizeGb: 4,
         instanceType: "t3.large",
-        machines: 1,
         ports: [
-          { port: Port.tcp(10022), description: "ci-storage container" },
+          { port: Port.tcp(26022), description: "ci-storage" },
+          { port: Port.tcp(28088), description: "ci-scaler", isWebhook: true },
           { port: Port.tcpRange(42000, 42042), description: "test ports" },
         ],
       },

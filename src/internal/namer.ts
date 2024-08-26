@@ -36,7 +36,7 @@ export function namer<T extends string>(
   namer.pathKebabFrom = (scope) =>
     (scope.node.path + "/" + namer.pascal).replace(/\//g, "-").toLowerCase();
   namer.pathPascalFrom = (scope) =>
-    new NamerOrig([...compact(scope.node.path.split(/\W+/)), ...namer.parts])
+    new NamerOrig(compact([...scope.node.path.split(/\W+/), ...namer.parts]))
       .pascal;
   return namer;
 }

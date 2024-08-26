@@ -1,6 +1,6 @@
 @clickup/ci-storage-cdk / [Exports](modules.md)
 
-# ci-storage-cdk: a CDK construct to deploy ci-storage infrastructure
+# ci-storage-cdk: A CDK construct to deploy ci-storage infrastructure
 
 ![CI run](https://github.com/clickup/ci-storage-cdk/actions/workflows/ci.yml/badge.svg?branch=main)
 

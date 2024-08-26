@@ -38,6 +38,7 @@ module.exports = (projectRoot, extraRules = {}) => ({
     "typescript-enum",
     "typescript-sort-keys",
     "unused-imports",
+    "no-only-tests",
   ],
   settings: {
     react: {
@@ -434,6 +435,9 @@ module.exports = (projectRoot, extraRules = {}) => ({
     ],
 
     quotes: ["error", "double", { avoidEscape: true }],
+
+    "no-only-tests/no-only-tests": "error",
+
     ...extraRules,
   },
 });

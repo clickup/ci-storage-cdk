@@ -1,7 +1,7 @@
 {
   "name": "@clickup/ci-storage-cdk",
   "description": "A CDK construct to deploy ci-storage infrastructure",
-  "version": "2.10.294",
+  "version": "2.11.1",
   "license": "MIT",
   "keywords": [
     "cdk",
@@ -12,15 +12,15 @@
   "types": "./dist/index.d.ts",
   "exports": "./dist/index.js",
   "scripts": {
-    "build": "$npm_execpath run clean; tsc",
+    "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput",
     "lint": "bash internal/lint.sh",
-    "test": "$npm_execpath run build && jest",
+    "test": "tsc && jest",
     "docs": "bash internal/docs.sh",
-    "clean": "rm -rf dist yarn.lock package-lock.json pnpm-lock.yaml *.log",
+    "clean": "bash internal/clean.sh",
     "copy-package-to-public-dir": "copy-package-to-public-dir.sh",
     "backport-package-from-public-dir": "backport-package-from-public-dir.sh",
-    "deploy": "$npm_execpath run build && $npm_execpath run test && $npm_execpath publish --access=public"
+    "deploy": "$npm_execpath run clean && $npm_execpath install && $npm_execpath run test && $npm_execpath publish --access=public"
   },
   "devDependencies": {
     "@types/jest": "^29.5.5",
@@ -32,6 +32,7 @@
     "eslint-import-resolver-typescript": "^3.5.5",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-lodash": "^7.4.0",
+    "eslint-plugin-no-only-tests": "^3.1.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react": "^7.32.2",
@@ -48,17 +49,17 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "aws-cdk": "^2.133.0",
-    "aws-cdk-lib": "^2.133.0",
+    "@clickup/instance-to-ami-cdk": "^2.10.295",
+    "aws-cdk-lib": "^2.154.1",
+    "aws-cdk": "^2.154.1",
     "cdk-ec2-key-pair": "^3.3.3",
     "constructs": "^10.3.0",
+    "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
-    "multi-convention-namer": "^0.1.12",
-    "js-yaml": "^4.1.0"
+    "multi-convention-namer": "^0.1.12"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/clickup/ci-storage-cdk",
-    "directory": "ci-storage-cdk"
+    "url": "git://github.com/clickup/ci-storage-cdk"
   }
 }
