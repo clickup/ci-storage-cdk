@@ -1,6 +1,12 @@
-[@clickup/ci-storage-cdk](../README.md) / [Exports](../modules.md) / CiStorage
+[**@clickup/ci-storage-cdk**](../README.md)
+
+***
+
+[@clickup/ci-storage-cdk](../globals.md) / CiStorage
 
 # Class: CiStorage
+
+Defined in: [src/CiStorage.ts:188](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L188)
 
 A reusable Construct to launch ci-storage infra in some other stack. This
 class is meant to be put in a public domain and then used in any project.
@@ -11,7 +17,7 @@ class is meant to be put in a public domain and then used in any project.
   sparse checkout), and then, `docker compose` is run. There is no need to
   pre-build any images or publish them anywhere, it's all done on the fly.
 
-Why vanilla EC2 instances + docker-compose and not ECS or Fargate?
+Why vanilla EC2 instances + docker compose and not ECS or Fargate?
 
 1. For ECS and Fargate, in 2 minutes after the termination warning, we only
    have more 2 minutes to shutdown the OS (it's documented, i.e. 4 minutes in
@@ -25,22 +31,22 @@ Why vanilla EC2 instances + docker-compose and not ECS or Fargate?
 3. Tests often times need to run "Docker in Docker", which is problematic in
    ECS and Fargate environment.
 
-## Hierarchy
+## Extends
 
 - `Construct`
 
-  ↳ **`CiStorage`**
-
 ## Constructors
 
-### constructor
+### new CiStorage()
 
-• **new CiStorage**(`scope`, `key`, `props`): [`CiStorage`](CiStorage.md)
+> **new CiStorage**(`scope`, `key`, `props`): [`CiStorage`](CiStorage.md)
+
+Defined in: [src/CiStorage.ts:206](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L206)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
+| Parameter | Type |
+| ------ | ------ |
 | `scope` | `Construct` |
 | `key` | `string` |
 | `props` | [`CiStorageProps`](../interfaces/CiStorageProps.md) |
@@ -51,152 +57,27 @@ Why vanilla EC2 instances + docker-compose and not ECS or Fargate?
 
 #### Overrides
 
-Construct.constructor
-
-#### Defined in
-
-[src/CiStorage.ts:203](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L203)
+`Construct.constructor`
 
 ## Properties
 
-### vpc
-
-• `Readonly` **vpc**: `IVpc`
-
-#### Defined in
-
-[src/CiStorage.ts:186](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L186)
-
-___
-
-### hostedZone
-
-• `Optional` `Readonly` **hostedZone**: `IHostedZone`
-
-#### Defined in
-
-[src/CiStorage.ts:187](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L187)
-
-___
-
-### keyPair
-
-• `Readonly` **keyPair**: `IKeyPair`
-
-#### Defined in
-
-[src/CiStorage.ts:188](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L188)
-
-___
-
-### keyPairPrivateKeySecretName
-
-• `Readonly` **keyPairPrivateKeySecretName**: `string`
-
-#### Defined in
-
-[src/CiStorage.ts:189](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L189)
-
-___
-
-### roles
-
-• `Readonly` **roles**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `runner` | `Role` |
-| `host` | `Role` |
-
-#### Defined in
-
-[src/CiStorage.ts:190](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L190)
-
-___
-
-### securityGroup
-
-• `Readonly` **securityGroup**: `SecurityGroup`
-
-#### Defined in
-
-[src/CiStorage.ts:191](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L191)
-
-___
-
-### vpcLink
-
-• `Readonly` **vpcLink**: `VpcLink`
-
-#### Defined in
-
-[src/CiStorage.ts:192](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L192)
-
-___
-
-### host
-
-• `Readonly` **host**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `fqdn` | `undefined` \| `string` |
-| `instance` | `CfnInstance` |
-
-#### Defined in
-
-[src/CiStorage.ts:193](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L193)
-
-___
-
-### autoScalingGroups
-
-• `Readonly` **autoScalingGroups**: \{ `autoScalingGroup`: `AutoScalingGroup` ; `launchTemplate`: `LaunchTemplate`  }[] = `[]`
-
-#### Defined in
-
-[src/CiStorage.ts:197](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L197)
-
-___
-
-### instanceToAmi
-
-• `Readonly` **instanceToAmi**: `InstanceToAmi`
-
-#### Defined in
-
-[src/CiStorage.ts:201](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L201)
-
-___
-
-### scope
-
-• `Readonly` **scope**: `Construct`
-
-#### Defined in
-
-[src/CiStorage.ts:204](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L204)
-
-___
-
-### key
-
-• `Readonly` **key**: `string`
-
-#### Defined in
-
-[src/CiStorage.ts:205](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L205)
-
-___
-
-### props
-
-• `Readonly` **props**: [`CiStorageProps`](../interfaces/CiStorageProps.md)
-
-#### Defined in
-
-[src/CiStorage.ts:206](https://github.com/clickup/ci-storage-cdk/blob/master/src/CiStorage.ts#L206)
+| Property | Type | Default value |
+| ------ | ------ | ------ |
+| <a id="vpc"></a> `vpc` | `IVpc` | `undefined` |
+| <a id="hostedzone"></a> `hostedZone?` | `IHostedZone` | `undefined` |
+| <a id="keypair"></a> `keyPair` | `IKeyPair` | `undefined` |
+| <a id="keypairprivatekeysecretname"></a> `keyPairPrivateKeySecretName` | `string` | `undefined` |
+| <a id="roles"></a> `roles` | `object` | `undefined` |
+| `roles.runner` | `Role` | `undefined` |
+| `roles.host` | `Role` | `undefined` |
+| <a id="securitygroup"></a> `securityGroup` | `SecurityGroup` | `undefined` |
+| <a id="vpclink"></a> `vpcLink` | `VpcLink` | `undefined` |
+| <a id="host"></a> `host` | `object` | `undefined` |
+| `host.fqdn` | `undefined` \| `string` | `undefined` |
+| `host.instance` | `CfnInstance` | `undefined` |
+| <a id="autoscalinggroups"></a> `autoScalingGroups` | `object`[] | `[]` |
+| <a id="instancetoami"></a> `instanceToAmi` | `InstanceToAmi` | `undefined` |
+| <a id="loggroupname"></a> `logGroupName` | `string` | `undefined` |
+| <a id="scope-1"></a> `scope` | `Construct` | `undefined` |
+| <a id="key-1"></a> `key` | `string` | `undefined` |
+| <a id="props-1"></a> `props` | [`CiStorageProps`](../interfaces/CiStorageProps.md) | `undefined` |

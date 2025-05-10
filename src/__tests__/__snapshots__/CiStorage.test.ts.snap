@@ -3,138 +3,15 @@
 exports[`CiStorage 1`] = `
 {
   "Description": "A stack to generate unit tests for CiStorage construct",
-  "Mappings": {
-    "LatestNodeRuntimeMap": {
-      "af-south-1": {
-        "value": "nodejs20.x",
-      },
-      "ap-east-1": {
-        "value": "nodejs20.x",
-      },
-      "ap-northeast-1": {
-        "value": "nodejs20.x",
-      },
-      "ap-northeast-2": {
-        "value": "nodejs20.x",
-      },
-      "ap-northeast-3": {
-        "value": "nodejs20.x",
-      },
-      "ap-south-1": {
-        "value": "nodejs20.x",
-      },
-      "ap-south-2": {
-        "value": "nodejs20.x",
-      },
-      "ap-southeast-1": {
-        "value": "nodejs20.x",
-      },
-      "ap-southeast-2": {
-        "value": "nodejs20.x",
-      },
-      "ap-southeast-3": {
-        "value": "nodejs20.x",
-      },
-      "ap-southeast-4": {
-        "value": "nodejs20.x",
-      },
-      "ap-southeast-5": {
-        "value": "nodejs20.x",
-      },
-      "ap-southeast-7": {
-        "value": "nodejs20.x",
-      },
-      "ca-central-1": {
-        "value": "nodejs20.x",
-      },
-      "ca-west-1": {
-        "value": "nodejs20.x",
-      },
-      "cn-north-1": {
-        "value": "nodejs18.x",
-      },
-      "cn-northwest-1": {
-        "value": "nodejs18.x",
-      },
-      "eu-central-1": {
-        "value": "nodejs20.x",
-      },
-      "eu-central-2": {
-        "value": "nodejs20.x",
-      },
-      "eu-isoe-west-1": {
-        "value": "nodejs18.x",
-      },
-      "eu-north-1": {
-        "value": "nodejs20.x",
-      },
-      "eu-south-1": {
-        "value": "nodejs20.x",
-      },
-      "eu-south-2": {
-        "value": "nodejs20.x",
-      },
-      "eu-west-1": {
-        "value": "nodejs20.x",
-      },
-      "eu-west-2": {
-        "value": "nodejs20.x",
-      },
-      "eu-west-3": {
-        "value": "nodejs20.x",
-      },
-      "il-central-1": {
-        "value": "nodejs20.x",
-      },
-      "me-central-1": {
-        "value": "nodejs20.x",
-      },
-      "me-south-1": {
-        "value": "nodejs20.x",
-      },
-      "mx-central-1": {
-        "value": "nodejs20.x",
-      },
-      "sa-east-1": {
-        "value": "nodejs20.x",
-      },
-      "us-east-1": {
-        "value": "nodejs20.x",
-      },
-      "us-east-2": {
-        "value": "nodejs20.x",
-      },
-      "us-gov-east-1": {
-        "value": "nodejs18.x",
-      },
-      "us-gov-west-1": {
-        "value": "nodejs18.x",
-      },
-      "us-iso-east-1": {
-        "value": "nodejs18.x",
-      },
-      "us-iso-west-1": {
-        "value": "nodejs18.x",
-      },
-      "us-isob-east-1": {
-        "value": "nodejs18.x",
-      },
-      "us-west-1": {
-        "value": "nodejs20.x",
-      },
-      "us-west-2": {
-        "value": "nodejs20.x",
-      },
-    },
-  },
+  "Mappings": "<skipped>",
   "Parameters": {
     "BootstrapVersion": {
       "Default": "/cdk-bootstrap/hnb659fds/version",
       "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
       "Type": "AWS::SSM::Parameter::Value<String>",
     },
-    "SsmParameterValuetestimagessmnameC96584B6F00A464EAD1953AFF4B05118Parameter": {
-      "Default": "/test-image/ssm/name",
+    "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter": {
+      "Default": "/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id",
       "Type": "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>",
     },
   },
@@ -148,7 +25,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "97f30e67419a1676a2215492723e5add1aa491caf0cbe2dd878fc4fab0468cd4.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "index.handler",
         "Role": {
@@ -317,43 +194,6 @@ exports[`CiStorage 1`] = `
             "PolicyDocument": {
               "Statement": [
                 {
-                  "Action": "ec2:DescribeInstances",
-                  "Effect": "Allow",
-                  "Resource": "*",
-                },
-                {
-                  "Action": "cloudformation:SignalResource",
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::Join": [
-                      "",
-                      [
-                        "arn:",
-                        {
-                          "Ref": "AWS::Partition",
-                        },
-                        ":cloudformation:",
-                        {
-                          "Ref": "AWS::Region",
-                        },
-                        ":",
-                        {
-                          "Ref": "AWS::AccountId",
-                        },
-                        ":stack/Stk/*",
-                      ],
-                    ],
-                  },
-                },
-              ],
-              "Version": "2012-10-17",
-            },
-            "PolicyName": "SignalResourcePolicy",
-          },
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
                   "Action": "ec2:DescribeTags",
                   "Effect": "Allow",
                   "Resource": "*",
@@ -399,6 +239,11 @@ exports[`CiStorage 1`] = `
             "PolicyDocument": {
               "Statement": [
                 {
+                  "Action": "ec2:DescribeInstances",
+                  "Effect": "Allow",
+                  "Resource": "*",
+                },
+                {
                   "Action": "autoscaling:DescribeAutoScalingGroups",
                   "Effect": "Allow",
                   "Resource": "*",
@@ -434,6 +279,92 @@ exports[`CiStorage 1`] = `
               "Version": "2012-10-17",
             },
             "PolicyName": "ScalerPolicy",
+          },
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":log-group:*",
+                      ],
+                    ],
+                  },
+                },
+                {
+                  "Action": "logs:CreateLogGroup",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":log-group:/aws/ec2/Stk-CnstrctLogs",
+                      ],
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":log-group:/aws/ec2/Stk-CnstrctLogs:log-stream:*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "CloudWatchPolicy",
           },
         ],
         "RoleName": "StkCnstrctHostRole",
@@ -476,7 +407,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "AutoScalingGroupGetNameFromInstance.handler",
         "Role": {
@@ -576,7 +507,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "AutoScalingGroupUpdateLaunchTemplateVersion.handler",
         "Role": {
@@ -676,7 +607,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "FastSnapshotRestoreEnable.handler",
         "Role": {
@@ -776,7 +707,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "FastSnapshotRestoreGC.handler",
         "Role": {
@@ -876,7 +807,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "FastSnapshotRestoreGetAction.handler",
         "Role": {
@@ -976,7 +907,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "ImageCreate.handler",
         "Role": {
@@ -1076,7 +1007,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "ImageGC.handler",
         "Role": {
@@ -1176,7 +1107,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "ImageGetAction.handler",
         "Role": {
@@ -1276,7 +1207,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "LaunchTemplateGC.handler",
         "Role": {
@@ -1376,7 +1307,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "LaunchTemplateGetNameFromInstance.handler",
         "Role": {
@@ -1476,7 +1407,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "LaunchTemplateUpdateImage.handler",
         "Role": {
@@ -1585,7 +1516,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "SnapshotCreate.handler",
         "Role": {
@@ -1685,7 +1616,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "SnapshotGC.handler",
         "Role": {
@@ -1785,7 +1716,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Handler": "SnapshotGetAction.handler",
         "Role": {
@@ -1885,7 +1816,7 @@ exports[`CiStorage 1`] = `
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "24889f5dc169825cb8dd9c7076e6f6886d38a18a2db3fd36a2431314d5711df1.zip",
+          "S3Key": "<skipped>",
         },
         "Environment": {
           "Variables": {
@@ -1909,7 +1840,7 @@ exports[`CiStorage 1`] = `
                 ],
               ],
             },
-            "USER_DATA_HASHES": "stk-cnstrct-runnercismall=ac1bd295908bee9f&stk-cnstrct-runnercilarge=46cf1a6641f4d946",
+            "USER_DATA_HASHES": "stk-cnstrct-runnercismall=e081e2b97842c80e&stk-cnstrct-runnercilarge=131519a026e94d74",
           },
         },
         "FunctionName": "stk-cnstrct-instancetoami",
@@ -2827,7 +2758,7 @@ exports[`CiStorage 1`] = `
         "ResourceRecords": [
           {
             "Fn::GetAtt": [
-              "CnstrctMyCiHost001Instance0F6CFAF181cec7ef931262b3",
+              "CnstrctMyCiHost001Instance0F6CFAF15e4f1523bcdfee21",
               "PrivateIp",
             ],
           },
@@ -2893,13 +2824,7 @@ exports[`CiStorage 1`] = `
       },
       "Type": "AWS::ApiGatewayV2::Integration",
     },
-    "CnstrctMyCiHost001Instance0F6CFAF181cec7ef931262b3": {
-      "CreationPolicy": {
-        "ResourceSignal": {
-          "Count": 1,
-          "Timeout": "PT15M",
-        },
-      },
+    "CnstrctMyCiHost001Instance0F6CFAF15e4f1523bcdfee21": {
       "Properties": {
         "AvailabilityZone": {
           "Fn::Select": [
@@ -2947,7 +2872,7 @@ exports[`CiStorage 1`] = `
                 "DeleteOnTermination": true,
                 "Encrypted": true,
                 "VolumeSize": 20,
-                "VolumeType": "gp2",
+                "VolumeType": "gp3",
               },
             },
           ],
@@ -2960,7 +2885,7 @@ exports[`CiStorage 1`] = `
             },
           },
           "ImageId": {
-            "Ref": "SsmParameterValuetestimagessmnameC96584B6F00A464EAD1953AFF4B05118Parameter",
+            "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter",
           },
           "KeyName": {
             "Fn::GetAtt": [
@@ -3035,19 +2960,21 @@ apt:
   sources:
     github-cli.list:
       source: deb https://cli.github.com/packages stable main
+      append: false
       keyid: 23F3D4EA75716059
     docker.list:
       source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
+      append: false
       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
 packages:
-  - awscli
+  - docker-ce=5:27.3.1-1~ubuntu.24.04~noble
+  - docker-ce-cli=5:27.3.1-1~ubuntu.24.04~noble
+  - containerd.io=1.7.23-1
+  - docker-compose-plugin=2.29.7-1~ubuntu.24.04~noble
+  - docker-buildx-plugin=0.17.1-1~ubuntu.24.04~noble
+  - qemu-system=1:8.2.2+ds-0ubuntu1.4
+  - qemu-user-static=1:8.2.2+ds-0ubuntu1.4
   - gh
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - docker-compose-plugin
-  - qemu
-  - qemu-user-static
   - binfmt-support
   - git
   - gosu
@@ -3062,6 +2989,9 @@ packages:
   - bwm-ng
   - jq
   - expect
+snap:
+  commands:
+    "0": snap install aws-cli --classic
 write_files:
   - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
     content: |
@@ -3085,14 +3015,16 @@ write_files:
           }
         },
         "default-runtime": "sysbox-runc",
-        "userns-remap": "sysbox"
+        "userns-remap": "sysbox",
+        "max-concurrent-downloads": 10,
+        "max-concurrent-uploads": 100
       }
   - path: /etc/systemd/system/docker.service.d/override.conf
     permissions: "0644"
     content: |
       [Service]
       TimeoutStopSec=3600
-      ExecStartPost=/home/ubuntu/run-docker-compose.sh
+      ExecStartPost=/home/ubuntu/run-docker-compose.sh --called-from-systemd
   - path: /etc/cron.d/git-pull-and-rerun-docker-compose-periodically
     permissions: "0644"
     content: |
@@ -3147,64 +3079,10 @@ write_files:
           fi
         } > "$dir/override.conf"
       done
-      wget -nv -O /tmp/sysbox-ce.deb "https://downloads.nestybox.com/sysbox/releases/v0.6.4/sysbox-ce_0.6.4-0.linux_$(dpkg --print-architecture).deb"
+      version="0.6.6"
+      wget -nv -O /tmp/sysbox-ce.deb "https://github.com/nestybox/sysbox/releases/download/v$version/sysbox-ce_$version-0.linux_$(dpkg --print-architecture).deb"
       dpkg -i /tmp/sysbox-ce.deb
       rm -f /tmp/sysbox-ce.deb
-  - path: /var/lib/cloud/scripts/per-once/rsync-tmpfs-volume-from-old-instance.sh
-    permissions: "0755"
-    content: |
-      #!/bin/bash
-      set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
-
-      instance_id=$(ec2metadata --instance-id)
-      stack_name=$(
-        aws ec2 describe-tags \\
-        --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=aws:cloudformation:stack-name" \\
-        --query "Tags[0].Value" --output text
-      )
-      logical_id=$(
-        aws ec2 describe-tags \\
-        --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=aws:cloudformation:logical-id" \\
-        --query "Tags[0].Value" --output text
-      )
-      old_instance_ip_addr=$(
-        aws ec2 describe-instances \\
-        --filters "Name=tag:Name,Values=my-ci-host-001.test-zoneName" "Name=instance-state-name,Values=running" \\
-        --query "Reservations[*].Instances[*].[InstanceId,PrivateIpAddress]" --output text \\
-        | grep -v "$instance_id" | awk '{print $2}' | head -n1 || true
-      )
-
-      if [[ "$old_instance_ip_addr" != "" ]]; then
-        mkdir -p ~/.ssh && chmod 700 ~/.ssh
-        aws secretsmanager get-secret-value \\
-          --secret-id "ec2-ssh-key/",
-                  {
-                    "Fn::GetAtt": [
-                      "CnstrctSshIdRsaEC2KeyPairstkcnstrctsshidrsaF4F38F69",
-                      "KeyPairName",
-                    ],
-                  },
-                  "/private" \\
-          --query SecretString --output text \\
-          > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-
-        systemctl stop docker docker.socket || true
-
-        ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \\
-          "ubuntu@$old_instance_ip_addr" "sudo systemctl stop docker docker.socket || true"
-
-        time rsync \\
-          -aHXS --one-file-system --numeric-ids --delete $@ \\
-          --rsh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \\
-          --rsync-path="sudo rsync" \\
-          "ubuntu@$old_instance_ip_addr:/var/lib/docker/" "/var/lib/docker/"
-
-      fi
-
-      aws cloudformation signal-resource \\
-        --stack-name "$stack_name" --logical-resource-id "$logical_id" \\
-        --unique-id "$instance_id" --status SUCCESS
   - path: /var/lib/cloud/scripts/per-once/allow-rsyslog-write-to-serial-console.sh
     permissions: "0755"
     content: |
@@ -3212,6 +3090,60 @@ write_files:
       set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
       usermod -a -G tty syslog
       systemctl restart rsyslog
+  - path: /var/lib/cloud/scripts/per-once/install-cloudwatch-agent.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      wget -nv -O /tmp/amazon-cloudwatch-agent.deb https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/$(dpkg --print-architecture)/latest/amazon-cloudwatch-agent.deb
+      dpkg -i /tmp/amazon-cloudwatch-agent.deb
+      systemctl enable amazon-cloudwatch-agent
+  - path: /var/lib/cloud/scripts/per-instance/configure-cloudwatch.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      cat > /opt/aws/amazon-cloudwatch-agent/bin/config.json <<EOF
+      {
+        "agent": {
+          "run_as_user": "root",
+          "interval": "5s",
+          "logfile": "/var/log/amazon-cloudwatch-agent"
+        },
+        "logs": {
+          "logs_collected": {
+            "files": {
+              "collect_list": [
+                {
+                  "file_path": "/var/log/cloud-init.log",
+                  "log_group_name": "/aws/ec2/Stk-CnstrctLogs",
+                  "log_stream_name": "$(ec2metadata --instance-id)/cloud-init.log",
+                  "timezone": "LOCAL",
+                  "retention_in_days": 7
+                },
+                {
+                  "file_path": "/var/log/cloud-init-output.log",
+                  "log_group_name": "/aws/ec2/Stk-CnstrctLogs",
+                  "log_stream_name": "$(ec2metadata --instance-id)/cloud-init-output.log",
+                  "timezone": "LOCAL",
+                  "retention_in_days": 7
+                },
+                {
+                  "file_path": "/var/log/syslog",
+                  "log_group_name": "/aws/ec2/Stk-CnstrctLogs",
+                  "log_stream_name": "$(ec2metadata --instance-id)/syslog",
+                  "timezone": "LOCAL",
+                  "retention_in_days": 7
+                }
+              ]
+            }
+          }
+        }
+      }
+      EOF
+      /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \\
+        -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+      systemctl restart amazon-cloudwatch-agent
   - path: /home/ubuntu/docker-pull-if-changed-rate-limit-friendly.sh
     owner: ubuntu:ubuntu
     permissions: "0755"
@@ -3284,7 +3216,7 @@ write_files:
                   },
                   "/private" \\
         --query SecretString --output text \\
-        > ~/.ssh/ci-storage
+        | cat > ~/.ssh/ci-storage
       chmod 600 ~/.ssh/ci-storage
       ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
 
@@ -3300,6 +3232,9 @@ write_files:
       fi
 
       mkdir -p ~/git && cd ~/git
+      if [[ -d .git ]] && ! git fsck; then
+        rm -rf ~/git/* ~/git/.*
+      fi
       if [[ ! -d .git ]]; then
         git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
         if [[ "docker" != "." ]]; then
@@ -3323,12 +3258,11 @@ write_files:
                     ],
                   },
                   ""
-      export ASGS="time-loop/slapdash:ci-small:stk-cnstrct-runnercismall time-loop/slapdash:ci-large:stk-cnstrct-runnercilarge"
+      export ASGS="clickup/ci-storage-cdk:ci-small:stk-cnstrct-runnercismall clickup/ci-storage-cdk:ci-large:stk-cnstrct-runnercilarge"
 
-      file=~/.docker-started-after-first-git-clone
-      if [[ ! -f $file ]]; then
+      if [[ "$*" != *--called-from-systemd* ]]; then
+        sudo systemctl daemon-reload
         sudo systemctl start docker docker.socket
-        touch $file
       fi
 
       cd "docker"
@@ -3338,7 +3272,7 @@ write_files:
       ~/docker-pull-if-changed-rate-limit-friendly.sh "ghcr.io" "dimikot/ci-scaler" "latest"
       docker compose --profile=ci up --build --remove-orphans -d
 
-      if [[ "$1" != "--no-print-compose-logs" ]]; then
+      if [[ "$*" != *--no-print-compose-logs* ]]; then
         sleep 5
         docker compose logs -n 10
       fi
@@ -3470,7 +3404,7 @@ write_files:
         "Targets": [
           {
             "Id": {
-              "Ref": "CnstrctMyCiHost001Instance0F6CFAF181cec7ef931262b3",
+              "Ref": "CnstrctMyCiHost001Instance0F6CFAF15e4f1523bcdfee21",
             },
           },
         ],
@@ -3545,6 +3479,9 @@ write_files:
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "UpdatePolicy": {
         "AutoScalingRollingUpdate": {
+          "MaxBatchSize": 20,
+          "MinInstancesInService": 0,
+          "PauseTime": "PT0S",
           "SuspendProcesses": [
             "HealthCheck",
             "ReplaceUnhealthy",
@@ -3624,7 +3561,7 @@ write_files:
                   """,
                   {
                     "Fn::GetAtt": [
-                      "CnstrctRunnerCiLargeLtImageCustomResourceC3e9d7e17B38AEE3",
+                      "CnstrctRunnerCiLargeLtImageCustomResourceDda6e2ce9D95A10B",
                       "Payload",
                     ],
                   },
@@ -3677,7 +3614,7 @@ write_files:
               "Tags": [
                 {
                   "Key": "InstanceToAmi:UserDataHash",
-                  "Value": "46cf1a6641f4d946",
+                  "Value": "131519a026e94d74",
                 },
               ],
             },
@@ -3686,7 +3623,7 @@ write_files:
               "Tags": [
                 {
                   "Key": "InstanceToAmi:UserDataHash",
-                  "Value": "46cf1a6641f4d946",
+                  "Value": "131519a026e94d74",
                 },
               ],
             },
@@ -3745,19 +3682,21 @@ apt:
   sources:
     github-cli.list:
       source: deb https://cli.github.com/packages stable main
+      append: false
       keyid: 23F3D4EA75716059
     docker.list:
       source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
+      append: false
       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
 packages:
-  - awscli
+  - docker-ce=5:27.3.1-1~ubuntu.24.04~noble
+  - docker-ce-cli=5:27.3.1-1~ubuntu.24.04~noble
+  - containerd.io=1.7.23-1
+  - docker-compose-plugin=2.29.7-1~ubuntu.24.04~noble
+  - docker-buildx-plugin=0.17.1-1~ubuntu.24.04~noble
+  - qemu-system=1:8.2.2+ds-0ubuntu1.4
+  - qemu-user-static=1:8.2.2+ds-0ubuntu1.4
   - gh
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - docker-compose-plugin
-  - qemu
-  - qemu-user-static
   - binfmt-support
   - git
   - gosu
@@ -3772,6 +3711,9 @@ packages:
   - bwm-ng
   - jq
   - expect
+snap:
+  commands:
+    "0": snap install aws-cli --classic
 write_files:
   - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
     content: |
@@ -3795,14 +3737,16 @@ write_files:
           }
         },
         "default-runtime": "sysbox-runc",
-        "userns-remap": "sysbox"
+        "userns-remap": "sysbox",
+        "max-concurrent-downloads": 10,
+        "max-concurrent-uploads": 100
       }
   - path: /etc/systemd/system/docker.service.d/override.conf
     permissions: "0644"
     content: |
       [Service]
       TimeoutStopSec=3600
-      ExecStartPost=/home/ubuntu/run-docker-compose.sh
+      ExecStartPost=/home/ubuntu/run-docker-compose.sh --called-from-systemd
   - path: /etc/cron.d/git-pull-and-rerun-docker-compose-periodically
     permissions: "0644"
     content: |
@@ -3857,7 +3801,8 @@ write_files:
           fi
         } > "$dir/override.conf"
       done
-      wget -nv -O /tmp/sysbox-ce.deb "https://downloads.nestybox.com/sysbox/releases/v0.6.4/sysbox-ce_0.6.4-0.linux_$(dpkg --print-architecture).deb"
+      version="0.6.6"
+      wget -nv -O /tmp/sysbox-ce.deb "https://github.com/nestybox/sysbox/releases/download/v$version/sysbox-ce_$version-0.linux_$(dpkg --print-architecture).deb"
       dpkg -i /tmp/sysbox-ce.deb
       rm -f /tmp/sysbox-ce.deb
   - path: /var/lib/cloud/scripts/per-once/allow-rsyslog-write-to-serial-console.sh
@@ -3867,6 +3812,60 @@ write_files:
       set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
       usermod -a -G tty syslog
       systemctl restart rsyslog
+  - path: /var/lib/cloud/scripts/per-once/install-cloudwatch-agent.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      wget -nv -O /tmp/amazon-cloudwatch-agent.deb https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/$(dpkg --print-architecture)/latest/amazon-cloudwatch-agent.deb
+      dpkg -i /tmp/amazon-cloudwatch-agent.deb
+      systemctl enable amazon-cloudwatch-agent
+  - path: /var/lib/cloud/scripts/per-instance/configure-cloudwatch.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      cat > /opt/aws/amazon-cloudwatch-agent/bin/config.json <<EOF
+      {
+        "agent": {
+          "run_as_user": "root",
+          "interval": "5s",
+          "logfile": "/var/log/amazon-cloudwatch-agent"
+        },
+        "logs": {
+          "logs_collected": {
+            "files": {
+              "collect_list": [
+                {
+                  "file_path": "/var/log/cloud-init.log",
+                  "log_group_name": "/aws/ec2/Stk-CnstrctLogs",
+                  "log_stream_name": "$(ec2metadata --instance-id)/cloud-init.log",
+                  "timezone": "LOCAL",
+                  "retention_in_days": 7
+                },
+                {
+                  "file_path": "/var/log/cloud-init-output.log",
+                  "log_group_name": "/aws/ec2/Stk-CnstrctLogs",
+                  "log_stream_name": "$(ec2metadata --instance-id)/cloud-init-output.log",
+                  "timezone": "LOCAL",
+                  "retention_in_days": 7
+                },
+                {
+                  "file_path": "/var/log/syslog",
+                  "log_group_name": "/aws/ec2/Stk-CnstrctLogs",
+                  "log_stream_name": "$(ec2metadata --instance-id)/syslog",
+                  "timezone": "LOCAL",
+                  "retention_in_days": 7
+                }
+              ]
+            }
+          }
+        }
+      }
+      EOF
+      /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \\
+        -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+      systemctl restart amazon-cloudwatch-agent
   - path: /home/ubuntu/docker-pull-if-changed-rate-limit-friendly.sh
     owner: ubuntu:ubuntu
     permissions: "0755"
@@ -3939,7 +3938,7 @@ write_files:
                   },
                   "/private" \\
         --query SecretString --output text \\
-        > ~/.ssh/ci-storage
+        | cat > ~/.ssh/ci-storage
       chmod 600 ~/.ssh/ci-storage
       ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
 
@@ -3955,6 +3954,9 @@ write_files:
       fi
 
       mkdir -p ~/git && cd ~/git
+      if [[ -d .git ]] && ! git fsck; then
+        rm -rf ~/git/* ~/git/.*
+      fi
       if [[ ! -d .git ]]; then
         git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
         if [[ "docker" != "." ]]; then
@@ -3970,14 +3972,13 @@ write_files:
       { set -x; } &> /dev/null
 
       export BTIME=$(cat /proc/stat | grep btime | awk '{print $2}')
-      export GH_REPOSITORY="time-loop/slapdash"
+      export GH_REPOSITORY="clickup/ci-storage-cdk"
       export GH_LABELS="my-ci,ci-large"
       export FORWARD_HOST="my-ci-host-001.test-zoneName"
 
-      file=~/.docker-started-after-first-git-clone
-      if [[ ! -f $file ]]; then
+      if [[ "$*" != *--called-from-systemd* ]]; then
+        sudo systemctl daemon-reload
         sudo systemctl start docker docker.socket
-        touch $file
       fi
 
       cd "docker"
@@ -3985,7 +3986,7 @@ write_files:
       ~/docker-pull-if-changed-rate-limit-friendly.sh "ghcr.io" "dimikot/ci-runner" "latest"
       docker compose up --build --remove-orphans -d
 
-      if [[ "$1" != "--no-print-compose-logs" ]]; then
+      if [[ "$*" != *--no-print-compose-logs* ]]; then
         sleep 5
         docker compose logs -n 10
       fi
@@ -3994,6 +3995,7 @@ write_files:
       export deps=$(docker image ls --format "{{.Repository}}:{{.ID}}:{{.Tag}}" | grep dimikot/ci-runner)
       export instanceId=$(cloud-init query ds.meta_data.instance_id)
       aws lambda invoke --function-name "stk-cnstrct-instancetoami" \\
+        --cli-binary-format raw-in-base64-out \\
         --payload "$(jq -nc '{"instanceId":$ENV.instanceId,"deps":$ENV.deps}')" \\
         /dev/stdout | jq -s '.[0]'
   - path: /home/ubuntu/.bash_profile
@@ -4052,10 +4054,10 @@ write_files:
       },
       "Type": "AWS::EC2::LaunchTemplate",
     },
-    "CnstrctRunnerCiLargeLtImageCustomResourceC3e9d7e17B38AEE3": {
+    "CnstrctRunnerCiLargeLtImageCustomResourceDda6e2ce9D95A10B": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "CnstrctRunnerCiLargeLtImageCustomResourceC3e9d7e1CustomResourcePolicyF65A30BE",
+        "CnstrctRunnerCiLargeLtImageCustomResourceDda6e2ceCustomResourcePolicy3191BD69",
         "CnstrctRunnerRoleDefaultPolicyCA04641E",
         "CnstrctRunnerRole341E54FA",
       ],
@@ -4070,9 +4072,9 @@ write_files:
               },
               "","InvocationType":"RequestResponse","Payload":"{\\"launchTemplateName\\":\\"stk-cnstrct-runnercilarge\\",\\"defaultImageId\\":\\"",
               {
-                "Ref": "SsmParameterValuetestimagessmnameC96584B6F00A464EAD1953AFF4B05118Parameter",
+                "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter",
               },
-              "\\",\\"userDataHash\\":\\"46cf1a6641f4d946\\"}"},"physicalResourceId":{"id":"StkCnstrctRunnerCiLargeLtResourceImageCustomResourceC3e9d7e1"}}",
+              "\\",\\"userDataHash\\":\\"131519a026e94d74\\"}"},"physicalResourceId":{"id":"StkCnstrctRunnerCiLargeLtResourceImageCustomResourceDda6e2ce"}}",
             ],
           ],
         },
@@ -4093,9 +4095,9 @@ write_files:
               },
               "","InvocationType":"RequestResponse","Payload":"{\\"launchTemplateName\\":\\"stk-cnstrct-runnercilarge\\",\\"defaultImageId\\":\\"",
               {
-                "Ref": "SsmParameterValuetestimagessmnameC96584B6F00A464EAD1953AFF4B05118Parameter",
+                "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter",
               },
-              "\\",\\"userDataHash\\":\\"46cf1a6641f4d946\\"}"},"physicalResourceId":{"id":"StkCnstrctRunnerCiLargeLtResourceImageCustomResourceC3e9d7e1"}}",
+              "\\",\\"userDataHash\\":\\"131519a026e94d74\\"}"},"physicalResourceId":{"id":"StkCnstrctRunnerCiLargeLtResourceImageCustomResourceDda6e2ce"}}",
             ],
           ],
         },
@@ -4103,7 +4105,7 @@ write_files:
       "Type": "Custom::AWS",
       "UpdateReplacePolicy": "Delete",
     },
-    "CnstrctRunnerCiLargeLtImageCustomResourceC3e9d7e1CustomResourcePolicyF65A30BE": {
+    "CnstrctRunnerCiLargeLtImageCustomResourceDda6e2ceCustomResourcePolicy3191BD69": {
       "DependsOn": [
         "CnstrctRunnerRoleDefaultPolicyCA04641E",
         "CnstrctRunnerRole341E54FA",
@@ -4124,7 +4126,7 @@ write_files:
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "CnstrctRunnerCiLargeLtImageCustomResourceC3e9d7e1CustomResourcePolicyF65A30BE",
+        "PolicyName": "CnstrctRunnerCiLargeLtImageCustomResourceDda6e2ceCustomResourcePolicy3191BD69",
         "Roles": [
           {
             "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
@@ -4352,6 +4354,9 @@ def handler(event, context):
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "UpdatePolicy": {
         "AutoScalingRollingUpdate": {
+          "MaxBatchSize": 10,
+          "MinInstancesInService": 0,
+          "PauseTime": "PT0S",
           "SuspendProcesses": [
             "HealthCheck",
             "ReplaceUnhealthy",
@@ -4431,7 +4436,7 @@ def handler(event, context):
                   """,
                   {
                     "Fn::GetAtt": [
-                      "CnstrctRunnerCiSmallLtImageCustomResource2db51ef0C46B9232",
+                      "CnstrctRunnerCiSmallLtImageCustomResourceCa75fca017C422F2",
                       "Payload",
                     ],
                   },
@@ -4484,7 +4489,7 @@ def handler(event, context):
               "Tags": [
                 {
                   "Key": "InstanceToAmi:UserDataHash",
-                  "Value": "ac1bd295908bee9f",
+                  "Value": "e081e2b97842c80e",
                 },
               ],
             },
@@ -4493,7 +4498,7 @@ def handler(event, context):
               "Tags": [
                 {
                   "Key": "InstanceToAmi:UserDataHash",
-                  "Value": "ac1bd295908bee9f",
+                  "Value": "e081e2b97842c80e",
                 },
               ],
             },
@@ -4552,19 +4557,21 @@ apt:
   sources:
     github-cli.list:
       source: deb https://cli.github.com/packages stable main
+      append: false
       keyid: 23F3D4EA75716059
     docker.list:
       source: deb https://download.docker.com/linux/ubuntu $RELEASE stable
+      append: false
       keyid: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
 packages:
-  - awscli
+  - docker-ce=5:27.3.1-1~ubuntu.24.04~noble
+  - docker-ce-cli=5:27.3.1-1~ubuntu.24.04~noble
+  - containerd.io=1.7.23-1
+  - docker-compose-plugin=2.29.7-1~ubuntu.24.04~noble
+  - docker-buildx-plugin=0.17.1-1~ubuntu.24.04~noble
+  - qemu-system=1:8.2.2+ds-0ubuntu1.4
+  - qemu-user-static=1:8.2.2+ds-0ubuntu1.4
   - gh
-  - docker-ce
-  - docker-ce-cli
-  - containerd.io
-  - docker-compose-plugin
-  - qemu
-  - qemu-user-static
   - binfmt-support
   - git
   - gosu
@@ -4579,6 +4586,9 @@ packages:
   - bwm-ng
   - jq
   - expect
+snap:
+  commands:
+    "0": snap install aws-cli --classic
 write_files:
   - path: /etc/sysctl.d/enable-ipv4-forwarding.conf
     content: |
@@ -4602,14 +4612,16 @@ write_files:
           }
         },
         "default-runtime": "sysbox-runc",
-        "userns-remap": "sysbox"
+        "userns-remap": "sysbox",
+        "max-concurrent-downloads": 10,
+        "max-concurrent-uploads": 100
       }
   - path: /etc/systemd/system/docker.service.d/override.conf
     permissions: "0644"
     content: |
       [Service]
       TimeoutStopSec=3600
-      ExecStartPost=/home/ubuntu/run-docker-compose.sh
+      ExecStartPost=/home/ubuntu/run-docker-compose.sh --called-from-systemd
   - path: /etc/cron.d/git-pull-and-rerun-docker-compose-periodically
     permissions: "0644"
     content: |
@@ -4664,7 +4676,8 @@ write_files:
           fi
         } > "$dir/override.conf"
       done
-      wget -nv -O /tmp/sysbox-ce.deb "https://downloads.nestybox.com/sysbox/releases/v0.6.4/sysbox-ce_0.6.4-0.linux_$(dpkg --print-architecture).deb"
+      version="0.6.6"
+      wget -nv -O /tmp/sysbox-ce.deb "https://github.com/nestybox/sysbox/releases/download/v$version/sysbox-ce_$version-0.linux_$(dpkg --print-architecture).deb"
       dpkg -i /tmp/sysbox-ce.deb
       rm -f /tmp/sysbox-ce.deb
   - path: /var/lib/cloud/scripts/per-once/allow-rsyslog-write-to-serial-console.sh
@@ -4674,6 +4687,60 @@ write_files:
       set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
       usermod -a -G tty syslog
       systemctl restart rsyslog
+  - path: /var/lib/cloud/scripts/per-once/install-cloudwatch-agent.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      wget -nv -O /tmp/amazon-cloudwatch-agent.deb https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/$(dpkg --print-architecture)/latest/amazon-cloudwatch-agent.deb
+      dpkg -i /tmp/amazon-cloudwatch-agent.deb
+      systemctl enable amazon-cloudwatch-agent
+  - path: /var/lib/cloud/scripts/per-instance/configure-cloudwatch.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      set -e -o pipefail && echo "================= $(date) | Up $(awk '{print $1}' /proc/uptime) seconds =================" && echo "Running $BASH_SOURCE as $(whoami)" && set -x && export AWS_DEFAULT_REGION=$(ec2metadata --availability-zone | sed "s/[a-z]$//")
+      cat > /opt/aws/amazon-cloudwatch-agent/bin/config.json <<EOF
+      {
+        "agent": {
+          "run_as_user": "root",
+          "interval": "5s",
+          "logfile": "/var/log/amazon-cloudwatch-agent"
+        },
+        "logs": {
+          "logs_collected": {
+            "files": {
+              "collect_list": [
+                {
+                  "file_path": "/var/log/cloud-init.log",
+                  "log_group_name": "/aws/ec2/Stk-CnstrctLogs",
+                  "log_stream_name": "$(ec2metadata --instance-id)/cloud-init.log",
+                  "timezone": "LOCAL",
+                  "retention_in_days": 7
+                },
+                {
+                  "file_path": "/var/log/cloud-init-output.log",
+                  "log_group_name": "/aws/ec2/Stk-CnstrctLogs",
+                  "log_stream_name": "$(ec2metadata --instance-id)/cloud-init-output.log",
+                  "timezone": "LOCAL",
+                  "retention_in_days": 7
+                },
+                {
+                  "file_path": "/var/log/syslog",
+                  "log_group_name": "/aws/ec2/Stk-CnstrctLogs",
+                  "log_stream_name": "$(ec2metadata --instance-id)/syslog",
+                  "timezone": "LOCAL",
+                  "retention_in_days": 7
+                }
+              ]
+            }
+          }
+        }
+      }
+      EOF
+      /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \\
+        -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+      systemctl restart amazon-cloudwatch-agent
   - path: /home/ubuntu/docker-pull-if-changed-rate-limit-friendly.sh
     owner: ubuntu:ubuntu
     permissions: "0755"
@@ -4746,7 +4813,7 @@ write_files:
                   },
                   "/private" \\
         --query SecretString --output text \\
-        > ~/.ssh/ci-storage
+        | cat > ~/.ssh/ci-storage
       chmod 600 ~/.ssh/ci-storage
       ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
 
@@ -4762,6 +4829,9 @@ write_files:
       fi
 
       mkdir -p ~/git && cd ~/git
+      if [[ -d .git ]] && ! git fsck; then
+        rm -rf ~/git/* ~/git/.*
+      fi
       if [[ ! -d .git ]]; then
         git clone -n --depth=1 --filter=tree:0  "https://github.com/dimikot/ci-storage" .
         if [[ "docker" != "." ]]; then
@@ -4777,14 +4847,13 @@ write_files:
       { set -x; } &> /dev/null
 
       export BTIME=$(cat /proc/stat | grep btime | awk '{print $2}')
-      export GH_REPOSITORY="time-loop/slapdash"
+      export GH_REPOSITORY="clickup/ci-storage-cdk"
       export GH_LABELS="my-ci,ci-small"
       export FORWARD_HOST="my-ci-host-001.test-zoneName"
 
-      file=~/.docker-started-after-first-git-clone
-      if [[ ! -f $file ]]; then
+      if [[ "$*" != *--called-from-systemd* ]]; then
+        sudo systemctl daemon-reload
         sudo systemctl start docker docker.socket
-        touch $file
       fi
 
       cd "docker"
@@ -4792,7 +4861,7 @@ write_files:
       ~/docker-pull-if-changed-rate-limit-friendly.sh "ghcr.io" "dimikot/ci-runner" "latest"
       docker compose up --build --remove-orphans -d
 
-      if [[ "$1" != "--no-print-compose-logs" ]]; then
+      if [[ "$*" != *--no-print-compose-logs* ]]; then
         sleep 5
         docker compose logs -n 10
       fi
@@ -4801,6 +4870,7 @@ write_files:
       export deps=$(docker image ls --format "{{.Repository}}:{{.ID}}:{{.Tag}}" | grep dimikot/ci-runner)
       export instanceId=$(cloud-init query ds.meta_data.instance_id)
       aws lambda invoke --function-name "stk-cnstrct-instancetoami" \\
+        --cli-binary-format raw-in-base64-out \\
         --payload "$(jq -nc '{"instanceId":$ENV.instanceId,"deps":$ENV.deps}')" \\
         /dev/stdout | jq -s '.[0]'
   - path: /home/ubuntu/.bash_profile
@@ -4859,10 +4929,10 @@ write_files:
       },
       "Type": "AWS::EC2::LaunchTemplate",
     },
-    "CnstrctRunnerCiSmallLtImageCustomResource2db51ef0C46B9232": {
+    "CnstrctRunnerCiSmallLtImageCustomResourceCa75fca017C422F2": {
       "DeletionPolicy": "Delete",
       "DependsOn": [
-        "CnstrctRunnerCiSmallLtImageCustomResource2db51ef0CustomResourcePolicy51CC6984",
+        "CnstrctRunnerCiSmallLtImageCustomResourceCa75fca0CustomResourcePolicyA3F71A05",
         "CnstrctRunnerRoleDefaultPolicyCA04641E",
         "CnstrctRunnerRole341E54FA",
       ],
@@ -4877,9 +4947,9 @@ write_files:
               },
               "","InvocationType":"RequestResponse","Payload":"{\\"launchTemplateName\\":\\"stk-cnstrct-runnercismall\\",\\"defaultImageId\\":\\"",
               {
-                "Ref": "SsmParameterValuetestimagessmnameC96584B6F00A464EAD1953AFF4B05118Parameter",
+                "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter",
               },
-              "\\",\\"userDataHash\\":\\"ac1bd295908bee9f\\"}"},"physicalResourceId":{"id":"StkCnstrctRunnerCiSmallLtResourceImageCustomResource2db51ef0"}}",
+              "\\",\\"userDataHash\\":\\"e081e2b97842c80e\\"}"},"physicalResourceId":{"id":"StkCnstrctRunnerCiSmallLtResourceImageCustomResourceCa75fca0"}}",
             ],
           ],
         },
@@ -4900,9 +4970,9 @@ write_files:
               },
               "","InvocationType":"RequestResponse","Payload":"{\\"launchTemplateName\\":\\"stk-cnstrct-runnercismall\\",\\"defaultImageId\\":\\"",
               {
-                "Ref": "SsmParameterValuetestimagessmnameC96584B6F00A464EAD1953AFF4B05118Parameter",
+                "Ref": "SsmParameterValueawsservicecanonicalubuntuserver2404stablecurrentarm64hvmebsgp3amiidC96584B6F00A464EAD1953AFF4B05118Parameter",
               },
-              "\\",\\"userDataHash\\":\\"ac1bd295908bee9f\\"}"},"physicalResourceId":{"id":"StkCnstrctRunnerCiSmallLtResourceImageCustomResource2db51ef0"}}",
+              "\\",\\"userDataHash\\":\\"e081e2b97842c80e\\"}"},"physicalResourceId":{"id":"StkCnstrctRunnerCiSmallLtResourceImageCustomResourceCa75fca0"}}",
             ],
           ],
         },
@@ -4910,7 +4980,7 @@ write_files:
       "Type": "Custom::AWS",
       "UpdateReplacePolicy": "Delete",
     },
-    "CnstrctRunnerCiSmallLtImageCustomResource2db51ef0CustomResourcePolicy51CC6984": {
+    "CnstrctRunnerCiSmallLtImageCustomResourceCa75fca0CustomResourcePolicyA3F71A05": {
       "DependsOn": [
         "CnstrctRunnerRoleDefaultPolicyCA04641E",
         "CnstrctRunnerRole341E54FA",
@@ -4931,7 +5001,7 @@ write_files:
           ],
           "Version": "2012-10-17",
         },
-        "PolicyName": "CnstrctRunnerCiSmallLtImageCustomResource2db51ef0CustomResourcePolicy51CC6984",
+        "PolicyName": "CnstrctRunnerCiSmallLtImageCustomResourceCa75fca0CustomResourcePolicyA3F71A05",
         "Roles": [
           {
             "Ref": "AWS679f53fac002430cb0da5b7982bd2287ServiceRoleC1EA0FF2",
@@ -5211,43 +5281,6 @@ def handler(event, context):
             "PolicyDocument": {
               "Statement": [
                 {
-                  "Action": "ec2:DescribeInstances",
-                  "Effect": "Allow",
-                  "Resource": "*",
-                },
-                {
-                  "Action": "cloudformation:SignalResource",
-                  "Effect": "Allow",
-                  "Resource": {
-                    "Fn::Join": [
-                      "",
-                      [
-                        "arn:",
-                        {
-                          "Ref": "AWS::Partition",
-                        },
-                        ":cloudformation:",
-                        {
-                          "Ref": "AWS::Region",
-                        },
-                        ":",
-                        {
-                          "Ref": "AWS::AccountId",
-                        },
-                        ":stack/Stk/*",
-                      ],
-                    ],
-                  },
-                },
-              ],
-              "Version": "2012-10-17",
-            },
-            "PolicyName": "SignalResourcePolicy",
-          },
-          {
-            "PolicyDocument": {
-              "Statement": [
-                {
                   "Action": "ec2:DescribeTags",
                   "Effect": "Allow",
                   "Resource": "*",
@@ -5288,6 +5321,92 @@ def handler(event, context):
               "Version": "2012-10-17",
             },
             "PolicyName": "TagsPolicy",
+          },
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "logs:DescribeLogGroups",
+                    "logs:DescribeLogStreams",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":log-group:*",
+                      ],
+                    ],
+                  },
+                },
+                {
+                  "Action": "logs:CreateLogGroup",
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":log-group:/aws/ec2/Stk-CnstrctLogs",
+                      ],
+                    ],
+                  },
+                },
+                {
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition",
+                        },
+                        ":logs:",
+                        {
+                          "Ref": "AWS::Region",
+                        },
+                        ":",
+                        {
+                          "Ref": "AWS::AccountId",
+                        },
+                        ":log-group:/aws/ec2/Stk-CnstrctLogs:log-stream:*",
+                      ],
+                    ],
+                  },
+                },
+              ],
+              "Version": "2012-10-17",
+            },
+            "PolicyName": "CloudWatchPolicy",
           },
         ],
         "RoleName": "StkCnstrctRunnerRole",
@@ -5463,7 +5582,7 @@ def handler(event, context):
           "S3Bucket": {
             "Fn::Sub": "cdk-hnb659fds-assets-\${AWS::AccountId}-\${AWS::Region}",
           },
-          "S3Key": "6df647194cd2bd5032d6a0553b301f3350abb6035c13b5ba2a73503a45e7fd80.zip",
+          "S3Key": "<skipped>",
         },
         "Description": "Custom CFN resource: Manage EC2 Key Pairs",
         "FunctionName": "Stk-CFN-Resource-Custom-EC2-Key-Pair",

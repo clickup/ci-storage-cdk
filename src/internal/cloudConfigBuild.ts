@@ -7,11 +7,17 @@ import {
 import compact from "lodash/compact";
 import { dedent } from "./dedent";
 
+// Cloud Config is precisely for this image (package names are different for
+// different Ubuntu versions for instance). We also use the latest kernel, since
+// it supports extended attributes on tmpfs (which are needed by rsync).
+export const SSM_IMAGE_NAME_ARM64 =
+  "/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id";
+
 /**
  * Builds a reusable and never changing cloud config to be passed to the
  * instance's CloudInit service. This config is multi-purpose: it doesn't know
  * about the role of the instance (host or runner), it just initiates the
- * instance to run docker-compose file on it.
+ * instance to run docker compose file on it.
  */
 export function cloudConfigBuild({
   fqdn,
@@ -26,6 +32,7 @@ export function cloudConfigBuild({
   ephemeral,
   tmpfs,
   swapSizeGb,
+  logGroupName,
 }: {
   fqdn: string | undefined;
   ghTokenSecretName: string;
@@ -41,8 +48,11 @@ export function cloudConfigBuild({
   keyPairPrivateKeySecretName: string;
   timeZone: string | undefined;
   ephemeral: { path: string; chown: string; chmod: string } | undefined;
-  tmpfs: { path: string; chmod: string; maxSizeGb?: number } | undefined;
+  tmpfs:
+    | { path: string; chmod: string; maxSizeGb?: number | string }
+    | undefined;
   swapSizeGb: number | undefined;
+  logGroupName: string;
 }) {
   if (!ghDockerComposeDirectoryUrl.match(/^([^#]+)(?:#([^:]*):(.*))?$/s)) {
     throw (
@@ -101,24 +111,26 @@ export function cloudConfigBuild({
       sources: {
         "github-cli.list": {
           source: "deb https://cli.github.com/packages stable main",
+          append: false,
           keyid: "23F3D4EA75716059",
         },
         "docker.list": {
           source:
             "deb https://download.docker.com/linux/ubuntu $RELEASE stable",
+          append: false,
           keyid: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88",
         },
       },
     },
     packages: [
-      "awscli",
+      "docker-ce=5:27.3.1-1~ubuntu.24.04~noble",
+      "docker-ce-cli=5:27.3.1-1~ubuntu.24.04~noble",
+      "containerd.io=1.7.23-1",
+      "docker-compose-plugin=2.29.7-1~ubuntu.24.04~noble",
+      "docker-buildx-plugin=0.17.1-1~ubuntu.24.04~noble",
+      "qemu-system=1:8.2.2+ds-0ubuntu1.4",
+      "qemu-user-static=1:8.2.2+ds-0ubuntu1.4",
       "gh",
-      "docker-ce",
-      "docker-ce-cli",
-      "containerd.io",
-      "docker-compose-plugin",
-      "qemu",
-      "qemu-user-static",
       "binfmt-support",
       "git",
       "gosu",
@@ -134,6 +146,11 @@ export function cloudConfigBuild({
       "jq",
       "expect",
     ],
+    snap: {
+      commands: {
+        "0": "snap install aws-cli --classic",
+      },
+    },
     // Files are written after bootcmd, but before packages are installed.
     write_files: compact([
       //
@@ -168,7 +185,9 @@ export function cloudConfigBuild({
               }
             },
             "default-runtime": "sysbox-runc",
-            "userns-remap": "sysbox"
+            "userns-remap": "sysbox",
+            "max-concurrent-downloads": 10,
+            "max-concurrent-uploads": 100
           }
         `),
       },
@@ -180,7 +199,7 @@ export function cloudConfigBuild({
           # Increase grace period for stopping containers.
           TimeoutStopSec=3600
           # Run docker compose ASAP after Docker starts.
-          ExecStartPost=/home/ubuntu/run-docker-compose.sh
+          ExecStartPost=/home/ubuntu/run-docker-compose.sh --called-from-systemd
         `),
       },
       {
@@ -268,77 +287,12 @@ export function cloudConfigBuild({
               fi
             } > "$dir/override.conf"
           done
-          wget -nv -O /tmp/sysbox-ce.deb "https://downloads.nestybox.com/sysbox/releases/v0.6.4/sysbox-ce_0.6.4-0.linux_$(dpkg --print-architecture).deb"
+          version="0.6.6"
+          wget -nv -O /tmp/sysbox-ce.deb "https://github.com/nestybox/sysbox/releases/download/v$version/sysbox-ce_$version-0.linux_$(dpkg --print-architecture).deb"
           dpkg -i /tmp/sysbox-ce.deb
           rm -f /tmp/sysbox-ce.deb
         `),
       },
-      tmpfs &&
-        fqdn && {
-          path: "/var/lib/cloud/scripts/per-once/rsync-tmpfs-volume-from-old-instance.sh",
-          permissions: "0755",
-          content: dedent(`
-            #!/bin/bash
-            ${preamble}
-
-            instance_id=$(ec2metadata --instance-id)
-            stack_name=$(
-              aws ec2 describe-tags \\
-              --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=aws:cloudformation:stack-name" \\
-              --query "Tags[0].Value" --output text
-            )
-            logical_id=$(
-              aws ec2 describe-tags \\
-              --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=aws:cloudformation:logical-id" \\
-              --query "Tags[0].Value" --output text
-            )
-            old_instance_ip_addr=$(
-              aws ec2 describe-instances \\
-              --filters "Name=tag:Name,Values=${fqdn}" "Name=instance-state-name,Values=running" \\
-              --query "Reservations[*].Instances[*].[InstanceId,PrivateIpAddress]" --output text \\
-              | grep -v "$instance_id" | awk '{print $2}' | head -n1 || true
-            )
-
-            if [[ "$old_instance_ip_addr" != "" ]]; then
-              # Load private key from Secrets Manager to ~/.ssh, to access the old host.
-              mkdir -p ~/.ssh && chmod 700 ~/.ssh
-              aws secretsmanager get-secret-value \\
-                --secret-id "${keyPairPrivateKeySecretName}" \\
-                --query SecretString --output text \\
-                > ~/.ssh/id_rsa
-              chmod 600 ~/.ssh/id_rsa
-
-              # Stop Docker service on the current host.
-              systemctl stop docker docker.socket || true
-
-              # Stop Docker service on the old (source) host.
-              ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \\
-                "ubuntu@$old_instance_ip_addr" "sudo systemctl stop docker docker.socket || true"
-
-              # 1. Surprisingly, it takes almost the same amount of time to rsync-init
-              #    (if we would run it without stopping Docker on the old host first)
-              #    as to the follow-up rsync-over (after we stopped Docker on the source).
-              #    This is probably because of the RAM drive and large Docker volumes. So
-              #    we skip rsync-init and just go with one full rsync run (with downtime).
-              # 2. Also, compression (even the fastest one) doesn't speed it up; probably
-              #    because AWS network is faster than instances CPU still.
-              time rsync \\
-                -aHXS --one-file-system --numeric-ids --delete $@ \\
-                --rsh="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \\
-                --rsync-path="sudo rsync" \\
-                "ubuntu@$old_instance_ip_addr:${tmpfs.path}/" "${tmpfs.path}/"
-
-              # We do NOT start Docker service here! Otherwise, it may auto-start some
-              # containers, those containers will expect the git directory to exist,
-              # although it may not exist yet. So, we start Docker service in
-              # run-docker-compose.sh (its 1st run), when we are sure that git is pulled.
-            fi
-
-            aws cloudformation signal-resource \\
-              --stack-name "$stack_name" --logical-resource-id "$logical_id" \\
-              --unique-id "$instance_id" --status SUCCESS
-          `),
-        },
       {
         path: "/var/lib/cloud/scripts/per-once/allow-rsyslog-write-to-serial-console.sh",
         permissions: "0755",
@@ -349,6 +303,71 @@ export function cloudConfigBuild({
           systemctl restart rsyslog
         `),
       },
+      {
+        path: "/var/lib/cloud/scripts/per-once/install-cloudwatch-agent.sh",
+        permissions: "0755",
+        content: dedent(`
+          #!/bin/bash
+          ${preamble}
+          wget -nv -O /tmp/amazon-cloudwatch-agent.deb https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/$(dpkg --print-architecture)/latest/amazon-cloudwatch-agent.deb
+          dpkg -i /tmp/amazon-cloudwatch-agent.deb
+          systemctl enable amazon-cloudwatch-agent
+        `),
+      },
+      //
+      // Per-instance scripts (ran after an instance is re-created from a
+      // snapshot).
+      //
+      {
+        path: "/var/lib/cloud/scripts/per-instance/configure-cloudwatch.sh",
+        permissions: "0755",
+        content: dedent(`
+          #!/bin/bash
+          ${preamble}
+          cat > /opt/aws/amazon-cloudwatch-agent/bin/config.json <<EOF
+          {
+            "agent": {
+              "run_as_user": "root",
+              "interval": "5s",
+              "logfile": "/var/log/amazon-cloudwatch-agent"
+            },
+            "logs": {
+              "logs_collected": {
+                "files": {
+                  "collect_list": [
+                    {
+                      "file_path": "/var/log/cloud-init.log",
+                      "log_group_name": "${logGroupName}",
+                      "log_stream_name": "$(ec2metadata --instance-id)/cloud-init.log",
+                      "timezone": "LOCAL",
+                      "retention_in_days": 7
+                    },
+                    {
+                      "file_path": "/var/log/cloud-init-output.log",
+                      "log_group_name": "${logGroupName}",
+                      "log_stream_name": "$(ec2metadata --instance-id)/cloud-init-output.log",
+                      "timezone": "LOCAL",
+                      "retention_in_days": 7
+                    },
+                    {
+                      "file_path": "/var/log/syslog",
+                      "log_group_name": "${logGroupName}",
+                      "log_stream_name": "$(ec2metadata --instance-id)/syslog",
+                      "timezone": "LOCAL",
+                      "retention_in_days": 7
+                    }
+                  ]
+                }
+              }
+            }
+          }
+          EOF
+          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \\
+            -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+          systemctl restart amazon-cloudwatch-agent
+        `),
+      },
+
       //
       // User scripts and tools (must have "defer=true" to be run after ubuntu
       // user is created).
@@ -429,7 +448,7 @@ export function cloudConfigBuild({
           aws secretsmanager get-secret-value \\
             --secret-id "${keyPairPrivateKeySecretName}" \\
             --query SecretString --output text \\
-            > ~/.ssh/ci-storage
+            | cat > ~/.ssh/ci-storage
           chmod 600 ~/.ssh/ci-storage
           ssh-keygen -f ~/.ssh/ci-storage -y > ~/.ssh/ci-storage.pub
 
@@ -448,6 +467,9 @@ export function cloudConfigBuild({
 
           # Pull the repository.
           mkdir -p ~/git && cd ~/git
+          if [[ -d .git ]] && ! git fsck; then
+            rm -rf ~/git/* ~/git/.*
+          fi
           if [[ ! -d .git ]]; then
             git clone -n --depth=1 --filter=tree:0 ${branch ? `-b "${branch}"` : ""} "${repoUrl}" .
             if [[ "${path}" != "." ]]; then
@@ -469,13 +491,10 @@ export function cloudConfigBuild({
             .map(([k, v]) => `export ${k}="${v}"`)
             .join("\n")}
 
-          # It it's the very 1st run, start Docker service. We do not start it every run,
-          # because otherwise we wouldn't be able to "systemctl stop docker docker.socket"
-          # manually or while copying files from the old host.
-          file=~/.docker-started-after-first-git-clone
-          if [[ ! -f $file ]]; then
+          # Start Docker in case it crashed before.
+          if [[ "$*" != *--called-from-systemd* ]]; then
+            sudo systemctl daemon-reload
             sudo systemctl start docker docker.socket
-            touch $file
           fi
 
           # Run docker compose.
@@ -490,7 +509,7 @@ export function cloudConfigBuild({
             .join("\n")}
           docker compose ${dockerComposeProfiles.map((profile) => `--profile=${profile} `).join("")}up --build --remove-orphans -d
 
-          if [[ "$1" != "--no-print-compose-logs" ]]; then
+          if [[ "$*" != *--no-print-compose-logs* ]]; then
             # Print logs before "docker system prune", otherwise they may be
             # empty in case the container failed to start. We can always look
             # at /var/log/syslog though.

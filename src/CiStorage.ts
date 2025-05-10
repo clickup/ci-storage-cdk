@@ -45,7 +45,10 @@ import { ARecord, RecordTarget, HostedZone } from "aws-cdk-lib/aws-route53";
 import { KeyPair } from "cdk-ec2-key-pair";
 import { Construct } from "constructs";
 import padStart from "lodash/padStart";
-import { cloudConfigBuild } from "./internal/cloudConfigBuild";
+import {
+  SSM_IMAGE_NAME_ARM64,
+  cloudConfigBuild,
+} from "./internal/cloudConfigBuild";
 import { cloudConfigYamlDump } from "./internal/cloudConfigYamlDump";
 import { dedent } from "./internal/dedent";
 import { namer } from "./internal/namer";
@@ -87,8 +90,6 @@ export interface CiStorageProps {
      * sparse-checkout that directory. The format is Dockerfile-compatible:
      * https://github.com/owner/repo[#[branch]:/directory/with/compose/] */
     ghDockerComposeDirectoryUrl: string;
-    /** SSM parameter name which holds the reference to an instance image. */
-    imageSsmName: string;
     /** Size of the root volume. */
     volumeRootGb: number;
     /** If set, IOPS for the root volume. */
@@ -101,10 +102,7 @@ export interface CiStorageProps {
      * logs volume and increase its size (added to volumeLogsGb). */
     swapSizeGb?: number;
     /** The list of requirements to choose Spot Instances. */
-    instanceRequirements: [
-      CfnAutoScalingGroup.InstanceRequirementsProperty,
-      ...CfnAutoScalingGroup.InstanceRequirementsProperty[],
-    ];
+    instanceRequirements: CfnAutoScalingGroup.InstanceRequirementsProperty[];
     /** The percentages of On-Demand Instances and Spot Instances for your
      * additional capacity. */
     onDemandPercentageAboveBaseCapacity: number;
@@ -135,17 +133,22 @@ export interface CiStorageProps {
      * sparse-checkout that directory. The format is Dockerfile-compatible:
      * https://github.com/owner/repo[#[branch]:/directory/with/compose/] */
     ghDockerComposeDirectoryUrl: string;
-    /** List of profiles from docker-compose to additionally start. */
+    /** List of profiles from docker compose file to start additionally. */
     dockerComposeProfiles?: string[];
-    /** SSM parameter name which holds the reference to an instance image. */
-    imageSsmName: string;
+    /** Size of the root volume. */
+    volumeRootGb: number;
+    /** If set, IOPS for the root volume. */
+    volumeRootIops?: number;
+    /** If set, throughput (MB/s) for the root volume. */
+    volumeRootThroughput?: number;
     /** Size of swap file (if you need it). The swapfile will be placed to
      * /var/swapfile on the root volume. */
     swapSizeGb?: number;
     /** If set, mounts the entire /var/lib/docker host instance directory to
-     * tmpfs with the provided max size, and also copies it from the old
-     * instance when the instance gets replaced. */
-    varLibDockerOnTmpfsMaxSizeGb?: number;
+     * tmpfs with the provided max size (can be either a number or a string with
+     * a suffix like "%"), and also copies it from the old instance when the
+     * instance gets replaced. */
+    varLibDockerOnTmpfsMaxSizeGb?: number | string;
     /** Full name of the Instance type. */
     instanceType: string;
     /** Ports to be open in the security group for connection from any CI
@@ -168,7 +171,7 @@ export interface CiStorageProps {
  *   sparse checkout), and then, `docker compose` is run. There is no need to
  *   pre-build any images or publish them anywhere, it's all done on the fly.
  *
- * Why vanilla EC2 instances + docker-compose and not ECS or Fargate?
+ * Why vanilla EC2 instances + docker compose and not ECS or Fargate?
  *
  * 1. For ECS and Fargate, in 2 minutes after the termination warning, we only
  *    have more 2 minutes to shutdown the OS (it's documented, i.e. 4 minutes in
@@ -199,7 +202,7 @@ export class CiStorage extends Construct {
     launchTemplate: LaunchTemplate;
   }> = [];
   public readonly instanceToAmi: InstanceToAmi;
-
+  public readonly logGroupName: string;
   constructor(
     public readonly scope: Construct,
     public readonly key: string,
@@ -226,6 +229,8 @@ export class CiStorage extends Construct {
     });
 
     this.vpc = props.vpc;
+
+    this.logGroupName = `/aws/ec2/${scope.node.id}-${this.node.id}Logs`;
 
     {
       const id = namer("zone");
@@ -296,27 +301,6 @@ export class CiStorage extends Construct {
                   }),
                 ],
               }),
-              [namer("signal", "resource", "policy").pascal]:
-                new PolicyDocument({
-                  statements: [
-                    new PolicyStatement({
-                      actions: ["ec2:DescribeInstances"],
-                      resources: ["*"],
-                      // Describe* don't support resource-level permissions.
-                    }),
-                    new PolicyStatement({
-                      actions: ["cloudformation:SignalResource"],
-                      resources: [
-                        Stack.of(this).formatArn({
-                          service: "cloudformation",
-                          resource: "stack",
-                          resourceName: `${Stack.of(this).stackName}/*`,
-                          arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
               [namer("tags", "policy").pascal]: new PolicyDocument({
                 statements: [
                   new PolicyStatement({
@@ -348,6 +332,11 @@ export class CiStorage extends Construct {
                     [namer("scaler", "policy").pascal]: new PolicyDocument({
                       statements: [
                         new PolicyStatement({
+                          actions: ["ec2:DescribeInstances"],
+                          resources: ["*"],
+                          // Describe* don't support resource-level permissions.
+                        }),
+                        new PolicyStatement({
                           actions: ["autoscaling:DescribeAutoScalingGroups"],
                           resources: ["*"],
                           // Describe* don't support resource-level permissions.
@@ -370,6 +359,46 @@ export class CiStorage extends Construct {
                     }),
                   }
                 : {}),
+              [namer("cloud", "watch", "policy").pascal]: new PolicyDocument({
+                statements: [
+                  new PolicyStatement({
+                    actions: [
+                      "logs:DescribeLogGroups",
+                      "logs:DescribeLogStreams",
+                    ],
+                    resources: [
+                      Stack.of(this).formatArn({
+                        service: "logs",
+                        resource: "log-group",
+                        resourceName: "*",
+                        arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+                      }),
+                    ],
+                  }),
+                  new PolicyStatement({
+                    actions: ["logs:CreateLogGroup"],
+                    resources: [
+                      Stack.of(this).formatArn({
+                        service: "logs",
+                        resource: "log-group",
+                        resourceName: this.logGroupName,
+                        arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+                      }),
+                    ],
+                  }),
+                  new PolicyStatement({
+                    actions: ["logs:CreateLogStream", "logs:PutLogEvents"],
+                    resources: [
+                      Stack.of(this).formatArn({
+                        service: "logs",
+                        resource: "log-group",
+                        resourceName: `${this.logGroupName}:log-stream:*`,
+                        arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+                      }),
+                    ],
+                  }),
+                ],
+              }),
             },
           }),
         ]),
@@ -466,6 +495,7 @@ export class CiStorage extends Construct {
                 }
               : undefined,
             swapSizeGb: props.host.swapSizeGb,
+            logGroupName: this.logGroupName,
           }),
         ),
       );
@@ -478,16 +508,18 @@ export class CiStorage extends Construct {
         detailedMonitoring: true,
         // The properties below are set at LaunchTemplate level, since it's the
         // only way to set them when using AutoScalingGroup.
-        machineImage: MachineImage.fromSsmParameter(props.host.imageSsmName),
+        machineImage: MachineImage.fromSsmParameter(SSM_IMAGE_NAME_ARM64),
         securityGroup: this.securityGroup,
         keyPair: this.keyPair,
         blockDevices: [
           {
             deviceName: "/dev/sda1",
-            volume: BlockDeviceVolume.ebs(20, {
+            volume: BlockDeviceVolume.ebs(props.host.volumeRootGb, {
               encrypted: true,
-              volumeType: EbsDeviceVolumeType.GP2,
+              volumeType: EbsDeviceVolumeType.GP3,
               deleteOnTermination: true,
+              iops: props.host.volumeRootIops,
+              throughput: props.host.volumeRootThroughput,
             }),
           },
         ],
@@ -505,9 +537,6 @@ export class CiStorage extends Construct {
         tags: [{ key: "Name", value: fqdn ?? recordName }],
       });
       userDataCausesReplacement(instance, userData);
-      instance.cfnOptions.creationPolicy = {
-        resourceSignal: { count: 1, timeout: "PT15M" },
-      };
 
       if (this.hostedZone) {
         new ARecord(this, namer(id, "a").pascal, {
@@ -596,6 +625,7 @@ export class CiStorage extends Construct {
               export deps=$(docker image ls --format "{{.Repository}}:{{.ID}}:{{.Tag}}" | grep dimikot/ci-runner)
               export instanceId=$(cloud-init query ds.meta_data.instance_id)
               aws lambda invoke --function-name "${instanceToAmiName}" \\
+                --cli-binary-format raw-in-base64-out \\
                 --payload "$(jq -nc '{"instanceId":$ENV.instanceId,"deps":$ENV.deps}')" \\
                 /dev/stdout | jq -s '.[0]'
             `),
@@ -608,6 +638,7 @@ export class CiStorage extends Construct {
             },
             tmpfs: undefined, // compose.yml will mount /mnt on tmpfs by itself
             swapSizeGb: runner.swapSizeGb,
+            logGroupName: this.logGroupName,
           }),
         ),
       );
@@ -620,7 +651,7 @@ export class CiStorage extends Construct {
         detailedMonitoring: true,
         // The properties below are set at LaunchTemplate level, since it's the
         // only way to set them when using AutoScalingGroup.
-        machineImage: MachineImage.fromSsmParameter(props.host.imageSsmName),
+        machineImage: MachineImage.fromSsmParameter(SSM_IMAGE_NAME_ARM64),
         securityGroup: this.securityGroup,
         keyPair: this.keyPair,
         blockDevices: [
@@ -684,7 +715,11 @@ export class CiStorage extends Construct {
           cooldown: Duration.seconds(30),
           defaultInstanceWarmup: Duration.seconds(60),
           groupMetrics: [GroupMetrics.all()],
-          updatePolicy: UpdatePolicy.rollingUpdate(),
+          updatePolicy: UpdatePolicy.rollingUpdate({
+            maxBatchSize: runner.maxCapacity,
+            minInstancesInService: 0,
+            pauseTime: Duration.minutes(0),
+          }),
         },
       );
       Tags.of(autoScalingGroup).add(

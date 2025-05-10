@@ -5,6 +5,7 @@ import type { Construct } from "constructs";
 import { CiStorage } from "../CiStorage";
 import { namer } from "../internal/namer";
 import type { Namer } from "../internal/namer";
+import { skipKeys } from "./internal/skipKeys";
 
 class CiStorageStack extends Stack {
   public readonly vpc: Vpc;
@@ -33,10 +34,9 @@ class CiStorageStack extends Stack {
       runners: [
         {
           label: "ci-small",
-          ghRepository: "time-loop/slapdash",
+          ghRepository: "clickup/ci-storage-cdk",
           ghDockerComposeDirectoryUrl:
             "https://github.com/dimikot/ci-storage#:docker",
-          imageSsmName: "/test-image/ssm/name",
           volumeRootGb: 20,
           volumeLogsGb: 5,
           swapSizeGb: 4,
@@ -56,10 +56,9 @@ class CiStorageStack extends Stack {
         },
         {
           label: "ci-large",
-          ghRepository: "time-loop/slapdash",
+          ghRepository: "clickup/ci-storage-cdk",
           ghDockerComposeDirectoryUrl:
             "https://github.com/dimikot/ci-storage#:docker",
-          imageSsmName: "/test-image/ssm/name",
           volumeRootGb: 40,
           volumeLogsGb: 5,
           swapSizeGb: 8,
@@ -82,7 +81,7 @@ class CiStorageStack extends Stack {
         ghDockerComposeDirectoryUrl:
           "https://github.com/dimikot/ci-storage#:docker",
         dockerComposeProfiles: ["ci"],
-        imageSsmName: "/test-image/ssm/name",
+        volumeRootGb: 20,
         varLibDockerOnTmpfsMaxSizeGb: 4,
         instanceType: "t3.large",
         ports: [
@@ -98,5 +97,6 @@ class CiStorageStack extends Stack {
 test("CiStorage", () => {
   const app = new App();
   const stack = new CiStorageStack(app, namer("stk"), {});
-  expect(Template.fromStack(stack).toJSON()).toMatchSnapshot();
+  const json = Template.fromStack(stack).toJSON();
+  expect(skipKeys(json, ["S3Key", "Mappings"])).toMatchSnapshot();
 });
